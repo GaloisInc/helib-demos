@@ -1,0 +1,933 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>/Volumes/Unix/unix-files.noindex/ntl-new/ntl-6.1.0/doc/ZZ.cpp.html</title>
+<meta name="Generator" content="Vim/7.3">
+<meta name="plugin-version" content="vim7.3_v6">
+<meta name="syntax" content="cpp">
+<meta name="settings" content="use_css">
+<style type="text/css">
+<!--
+pre { font-family: monospace; color: #000000; background-color: #ffffff; }
+body { font-family: monospace; color: #000000; background-color: #ffffff; }
+.Constant { color: #ff8c00; }
+.Statement { color: #b03060; font-weight: bold; }
+.Type { color: #008b00; font-weight: bold; }
+.String { color: #4a708b; }
+.PreProc { color: #1874cd; }
+.Comment { color: #0000ee; font-style: italic; }
+-->
+</style>
+</head>
+<body>
+<pre>
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">MODULE: ZZ</span>
+
+<span class="Comment">SUMMARY:</span>
+
+<span class="Comment">The class ZZ is used to represent signed, arbitrary length integers.</span>
+
+<span class="Comment">Routines are provided for all of the basic arithmetic operations, as</span>
+<span class="Comment">well as for some more advanced operations such as primality testing.</span>
+<span class="Comment">Space is automatically managed by the constructors and destructors.</span>
+
+<span class="Comment">This module also provides routines for generating small primes, and</span>
+<span class="Comment">fast routines for performing modular arithmetic on single-precision</span>
+<span class="Comment">numbers.</span>
+
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+<span class="PreProc">#include </span><span class="String">&lt;NTL/tools.h&gt;</span>
+
+
+<span class="Type">class</span> ZZ {
+<span class="Statement">public</span>:
+
+
+   ZZ(); <span class="Comment">// initial value is 0</span>
+
+   ZZ(<span class="Type">const</span> ZZ&amp; a);  <span class="Comment">// copy constructor</span>
+   <span class="Type">explicit</span> ZZ(<span class="Type">long</span> a);  <span class="Comment">// promotion constructor</span>
+
+   ~ZZ(); <span class="Comment">// destructor</span>
+
+   ZZ&amp; <span class="Statement">operator</span>=(<span class="Type">const</span> ZZ&amp; a);  <span class="Comment">// assignment operator</span>
+   ZZ&amp; <span class="Statement">operator</span>=(<span class="Type">long</span> a);
+
+   <span class="Comment">// typedefs to aid in generic programming</span>
+   <span class="Type">typedef</span> ZZ_p residue_type;
+   <span class="Type">typedef</span> ZZX poly_type;
+
+
+   <span class="Comment">// ...</span>
+
+};
+
+
+<span class="Comment">// NOTE: A ZZ is represented as a sequence of &quot;zzigits&quot;,</span>
+<span class="Comment">// where each zzigit is between 0 and 2^{NTL_ZZ_NBITS-1}.</span>
+
+<span class="Comment">// NTL_ZZ_NBITS is  macros defined in &lt;NTL/ZZ.h&gt;.</span>
+
+<span class="Comment">// SIZE INVARIANT: the number of bits in a ZZ is always less than</span>
+<span class="Comment">// 2^(NTL_BITS_PER_LONG-4).</span>
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                                 Comparison</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+
+<span class="Comment">// The usual comparison operators: </span>
+
+<span class="Type">long</span> <span class="Statement">operator</span>==(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Type">long</span> <span class="Statement">operator</span>!=(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Type">long</span> <span class="Statement">operator</span>&lt;(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Type">long</span> <span class="Statement">operator</span>&gt;(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Type">long</span> <span class="Statement">operator</span>&lt;=(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Type">long</span> <span class="Statement">operator</span>&gt;=(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+
+<span class="Comment">// other stuff:</span>
+
+<span class="Type">long</span> sign(<span class="Type">const</span> ZZ&amp; a); <span class="Comment">// returns sign of a (-1, 0, +1)</span>
+<span class="Type">long</span> IsZero(<span class="Type">const</span> ZZ&amp; a); <span class="Comment">// test for 0</span>
+<span class="Type">long</span> IsOne(<span class="Type">const</span> ZZ&amp; a); <span class="Comment">// test for 1</span>
+
+<span class="Type">long</span> compare(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// returns sign of a-b (-1, 0, or 1).</span>
+
+<span class="Comment">// PROMOTIONS: the comparison operators and the function compare</span>
+<span class="Comment">// support promotion from long to ZZ on (a, b).</span>
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                                 Addition</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+<span class="Comment">// operator notation:</span>
+
+ZZ <span class="Statement">operator</span>+(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+ZZ <span class="Statement">operator</span>-(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+ZZ <span class="Statement">operator</span>-(<span class="Type">const</span> ZZ&amp; a); <span class="Comment">// unary -</span>
+
+ZZ&amp; <span class="Statement">operator</span>+=(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a);
+ZZ&amp; <span class="Statement">operator</span>+=(ZZ&amp; x, <span class="Type">long</span> a);
+
+ZZ&amp; <span class="Statement">operator</span>-=(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a);
+ZZ&amp; <span class="Statement">operator</span>-=(ZZ&amp; x, <span class="Type">long</span> a);
+
+ZZ&amp; <span class="Statement">operator</span>++(ZZ&amp; x);  <span class="Comment">// prefix</span>
+<span class="Type">void</span> <span class="Statement">operator</span>++(ZZ&amp; x, <span class="Type">int</span>);  <span class="Comment">// postfix</span>
+
+ZZ&amp; <span class="Statement">operator</span>--(ZZ&amp; x);  <span class="Comment">// prefix</span>
+<span class="Type">void</span> <span class="Statement">operator</span>--(ZZ&amp; x, <span class="Type">int</span>);  <span class="Comment">// postfix</span>
+
+
+
+<span class="Comment">// procedural versions:</span>
+
+<span class="Type">void</span> add(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// x = a + b</span>
+<span class="Type">void</span> sub(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// x = a - b</span>
+<span class="Type">void</span> SubPos(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// x = a-b; assumes a &gt;= b &gt;= 0.</span>
+<span class="Type">void</span> negate(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a); <span class="Comment">// x = -a</span>
+
+<span class="Type">void</span> abs(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a); <span class="Comment">// x = |a|</span>
+ZZ abs(<span class="Type">const</span> ZZ&amp; a);
+
+<span class="Comment">// PROMOTIONS: binary +, -, as well as the procedural versions add, sub</span>
+<span class="Comment">// support promotions from long to ZZ on (a, b).</span>
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                             Multiplication</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+<span class="Comment">// operator notation:</span>
+
+ZZ <span class="Statement">operator</span>*(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+
+ZZ&amp; <span class="Statement">operator</span>*=(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a);
+ZZ&amp; <span class="Statement">operator</span>*=(ZZ&amp; x, <span class="Type">long</span> a);
+
+<span class="Comment">// procedural versions:</span>
+
+<span class="Type">void</span> mul(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// x = a * b</span>
+
+<span class="Type">void</span> sqr(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a); <span class="Comment">// x = a*a</span>
+ZZ sqr(<span class="Type">const</span> ZZ&amp; a);
+
+<span class="Comment">// PROMOTIONS: operator * and procedure mul support promotion</span>
+<span class="Comment">// from long to ZZ on (a, b).</span>
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                            Combined Multiply and Add </span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+<span class="Type">void</span> MulAddTo(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// x += a*b</span>
+<span class="Type">void</span> MulAddTo(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> b);      <span class="Comment">// x += a*b</span>
+
+
+<span class="Type">void</span> MulSubFrom(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// x -= a*b</span>
+<span class="Type">void</span> MulSubFrom(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> b);      <span class="Comment">// x -= a*b</span>
+
+<span class="Comment">// NOTE: these are provided for both convenience and efficiency.</span>
+<span class="Comment">// The single-precision versions may be significantly</span>
+<span class="Comment">// faster than the code sequence </span>
+<span class="Comment">//   mul(tmp, a, b); add(x, x, tmp);</span>
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                                 Division</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+<span class="Comment">// operator notation:</span>
+
+ZZ <span class="Statement">operator</span>/(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+ZZ <span class="Statement">operator</span>/(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span>  b);
+
+ZZ <span class="Statement">operator</span>%(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Type">long</span> <span class="Statement">operator</span>%(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> b);
+
+ZZ&amp; <span class="Statement">operator</span>/=(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; b);
+ZZ&amp; <span class="Statement">operator</span>/=(ZZ&amp; x, <span class="Type">long</span> b);
+
+ZZ&amp; <span class="Statement">operator</span>%=(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; b);
+
+
+<span class="Comment">// procedural versions:</span>
+
+<span class="Type">void</span> DivRem(ZZ&amp; q, ZZ&amp; r, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Comment">// q = floor(a/b), r = a - b*q.</span>
+<span class="Comment">// This implies that:</span>
+<span class="Comment">//    |r| &lt; |b|, and if r != 0, sign(r) = sign(b)</span>
+
+<span class="Type">void</span> div(ZZ&amp; q, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Comment">// q = floor(a/b)</span>
+
+<span class="Type">void</span> rem(ZZ&amp; r, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Comment">// q = floor(a/b), r = a - b*q</span>
+
+
+<span class="Comment">// single-precision variants:</span>
+
+<span class="Type">long</span> DivRem(ZZ&amp; q, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> b);
+<span class="Comment">// q = floor(a/b), r = a - b*q, return value is r.</span>
+
+<span class="Type">long</span> rem(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> b);
+<span class="Comment">// q = floor(a/b), r = a - b*q, return value is r.</span>
+
+
+<span class="Comment">// divisibility testing:</span>
+
+<span class="Type">long</span> divide(ZZ&amp; q, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Type">long</span> divide(ZZ&amp; q, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> b);
+<span class="Comment">// if b | a, sets q = a/b and returns 1; otherwise returns 0.</span>
+
+<span class="Type">long</span> divide(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+<span class="Type">long</span> divide(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> b);
+<span class="Comment">// if b | a, returns 1; otherwise returns 0.</span>
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                                    GCD's</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+<span class="Type">void</span> GCD(ZZ&amp; d, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+ZZ GCD(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+
+<span class="Comment">// d = gcd(a, b) (which is always non-negative).  Uses a binary GCD</span>
+<span class="Comment">// algorithm.</span>
+
+
+
+<span class="Type">void</span> XGCD(ZZ&amp; d, ZZ&amp; s, ZZ&amp; t, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+
+<span class="Comment">//  d = gcd(a, b) = a*s + b*t.</span>
+
+<span class="Comment">// The coefficients s and t are defined according to the standard</span>
+<span class="Comment">// Euclidean algorithm applied to |a| and |b|, with the signs then</span>
+<span class="Comment">// adjusted according to the signs of a and b.</span>
+
+<span class="Comment">// The implementation may or may not Euclid's algorithm,</span>
+<span class="Comment">// but the coefficients a and t are always computed as if </span>
+<span class="Comment">// it did.</span>
+
+
+<span class="Comment">// special-purpose single-precision variants:</span>
+
+<span class="Type">long</span> GCD(<span class="Type">long</span> a, <span class="Type">long</span> b);
+<span class="Comment">// return value is gcd(a, b) (which is always non-negative)</span>
+
+<span class="Type">void</span> XGCD(<span class="Type">long</span>&amp; d, <span class="Type">long</span>&amp; s, <span class="Type">long</span>&amp; t, <span class="Type">long</span> a, <span class="Type">long</span> b);
+<span class="Comment">//  d = gcd(a, b) = a*s + b*t.</span>
+
+<span class="Comment">//  The coefficients s and t are defined according to the standard</span>
+<span class="Comment">//  Euclidean algorithm applied to |a| and |b|, with the signs then</span>
+<span class="Comment">//  adjusted according to the signs of a and b.</span>
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                             Modular Arithmetic</span>
+
+<span class="Comment">The following routines perform arithmetic mod n, where n &gt; 1.</span>
+
+<span class="Comment">All arguments (other than exponents) are assumed to be in the range</span>
+<span class="Comment">0..n-1.  Some routines may check this and raise an error if this</span>
+<span class="Comment">does not hold.  Others may not, and the behaviour is unpredictable</span>
+<span class="Comment">in this case.</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+
+<span class="Type">void</span> AddMod(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b, <span class="Type">const</span> ZZ&amp; n); <span class="Comment">// x = (a+b)%n</span>
+ZZ AddMod(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b, <span class="Type">const</span> ZZ&amp; n);
+
+<span class="Type">void</span> SubMod(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b, <span class="Type">const</span> ZZ&amp; n); <span class="Comment">// x = (a-b)%n</span>
+ZZ SubMod(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b, <span class="Type">const</span> ZZ&amp; n);
+
+<span class="Type">void</span> NegateMod(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n); <span class="Comment">// x = -a % n</span>
+ZZ NegateMod(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n);
+
+<span class="Type">void</span> MulMod(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b, <span class="Type">const</span> ZZ&amp; n); <span class="Comment">// x = (a*b)%n</span>
+ZZ MulMod(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b, <span class="Type">const</span> ZZ&amp; n);
+
+<span class="Type">void</span> SqrMod(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n); <span class="Comment">// x = a^2 % n</span>
+ZZ SqrMod(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n);
+
+<span class="Type">void</span> InvMod(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n);
+ZZ InvMod(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n);
+<span class="Comment">// x = a^{-1} mod n (0 &lt;= x &lt; n); error is raised occurs if inverse</span>
+<span class="Comment">// not defined</span>
+
+<span class="Type">long</span> InvModStatus(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n);
+<span class="Comment">// if gcd(a,b) = 1, then return-value = 0, x = a^{-1} mod n;</span>
+<span class="Comment">// otherwise, return-value = 1, x = gcd(a, n)</span>
+
+<span class="Type">void</span> PowerMod(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; e, <span class="Type">const</span> ZZ&amp; n);
+ZZ PowerMod(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; e, <span class="Type">const</span> ZZ&amp; n);
+
+<span class="Type">void</span> PowerMod(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> e, <span class="Type">const</span> ZZ&amp; n);
+ZZ PowerMod(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> e, <span class="Type">const</span> ZZ&amp; n);
+
+<span class="Comment">// x = a^e % n (e may be negative)</span>
+
+
+<span class="Comment">// PROMOTIONS: AddMod, SubMod, and MulMod (both procedural and functional</span>
+<span class="Comment">// forms) support promotions from long to ZZ on (a, b).</span>
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                        Single-precision modular arithmetic</span>
+
+<span class="Comment">These routines implement single-precision modular arithmetic.  If n is</span>
+<span class="Comment">the modulus, all inputs should be in the range 0..n-1.  The number n</span>
+<span class="Comment">itself should be in the range 2..NTL_SP_BOUND-1.</span>
+
+<span class="Comment">Most of these routines are, of course, implemented as fast inline</span>
+<span class="Comment">functions.  No checking is done that inputs are in range.</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+
+
+<span class="Type">long</span> AddMod(<span class="Type">long</span> a, <span class="Type">long</span> b, <span class="Type">long</span> n); <span class="Comment">// return (a+b)%n</span>
+
+<span class="Type">long</span> SubMod(<span class="Type">long</span> a, <span class="Type">long</span> b, <span class="Type">long</span> n); <span class="Comment">// return (a-b)%n</span>
+
+<span class="Type">long</span> NegateMod(<span class="Type">long</span> a, <span class="Type">long</span> n); <span class="Comment">// return (-a)%n</span>
+
+<span class="Type">long</span> MulMod(<span class="Type">long</span> a, <span class="Type">long</span> b, <span class="Type">long</span> n); <span class="Comment">// return (a*b)%n</span>
+
+<span class="Type">long</span> MulMod(<span class="Type">long</span> a, <span class="Type">long</span> b, <span class="Type">long</span> n, <span class="Type">double</span> ninv);
+<span class="Comment">// return (a*b)%n.  ninv = 1/((double) n).  This is faster if n is</span>
+<span class="Comment">// fixed for many multiplications.</span>
+
+
+<span class="Type">long</span> MulMod2(<span class="Type">long</span> a, <span class="Type">long</span> b, <span class="Type">long</span> n, <span class="Type">double</span> bninv);
+<span class="Comment">// return (a*b)%n.  bninv = ((double) b)/((double) n).  This is faster</span>
+<span class="Comment">// if both n and b are fixed for many multiplications.</span>
+<span class="Comment">// Note: This is OBSOLETE -- use MulModPrecon (see below) for </span>
+<span class="Comment">// better performance.</span>
+
+
+<span class="Type">long</span> MulDivRem(<span class="Type">long</span>&amp; q, <span class="Type">long</span> a, <span class="Type">long</span> b, <span class="Type">long</span> n, <span class="Type">double</span> bninv);
+<span class="Comment">// return (a*b)%n, set q = (a*b)/n.  bninv = ((double) b)/((double) n)</span>
+
+<span class="Type">long</span> InvMod(<span class="Type">long</span> a, <span class="Type">long</span> n);
+<span class="Comment">// computes a^{-1} mod n.  Error is raised if undefined.</span>
+
+<span class="Type">long</span> PowerMod(<span class="Type">long</span> a, <span class="Type">long</span> e, <span class="Type">long</span> n);
+<span class="Comment">// computes a^e mod n (e may be negative)</span>
+
+
+
+<span class="Comment">// The following are variants of MulMod2 above that may be significantly </span>
+<span class="Comment">// faster on certain machines.  The implmentation varies depending</span>
+<span class="Comment">// on the settings of the flags NTL_SPMM_ULL and NTL_SPMM_UL.</span>
+<span class="Comment">// By default (no flags), the implementation is the same as MulMod2 above.</span>
+<span class="Comment">// It is best to let the Wizard script select the optimal flag.</span>
+
+<span class="Type">typedef</span> mulmod_precon_t  <span class="Comment">/*</span><span class="Comment">  depends on implementation </span><span class="Comment">*/</span> ;
+
+mulmod_precon_t PrepMulModPrecon(<span class="Type">long</span> b, <span class="Type">long</span> n, <span class="Type">double</span> ninv);
+<span class="Comment">// Prepares preconditioning. ninv = 1/((double) n)</span>
+
+<span class="Type">long</span> MulModPrecon(<span class="Type">long</span> a, <span class="Type">long</span> b, <span class="Type">long</span> n, mulmod_precon_t bninv);
+<span class="Comment">// return (a*b)%n.  bninv = MulModPrecon(b, n, ninv).</span>
+
+<span class="Comment">// Example of use:</span>
+<span class="Comment">//    long a, b, n, c;</span>
+<span class="Comment">//      ...</span>
+<span class="Comment">//    double ninv = 1/((double) n);</span>
+<span class="Comment">//    mulmod_precon_t bninv = PrepMulModPrecon(b, n, ninv);</span>
+<span class="Comment">//     ...</span>
+<span class="Comment">//    c = MulModPrecon(a, b, n, bninv);  // c = (a*b) % n</span>
+
+
+
+<span class="Comment">// The following are vector versions of the MulMod routines</span>
+<span class="Comment">// They each compute x[i] = (a[i] * b[i])% n   i = 0..k-1 </span>
+
+<span class="Type">void</span> VectorMulMod(<span class="Type">long</span> k, <span class="Type">long</span> *x, <span class="Type">const</span> <span class="Type">long</span> *a, <span class="Type">long</span> b, <span class="Type">long</span> n);
+
+<span class="Type">void</span> VectorMulMod(<span class="Type">long</span> k, <span class="Type">long</span> *x, <span class="Type">const</span> <span class="Type">long</span> *a, <span class="Type">long</span> b, <span class="Type">long</span> n,
+                  <span class="Type">double</span> ninv);
+<span class="Comment">// ninv == 1/((double) n)</span>
+
+<span class="Type">void</span> VectorMulModPrecon(<span class="Type">long</span> k, <span class="Type">long</span> *x, <span class="Type">const</span> <span class="Type">long</span> *a, <span class="Type">long</span> b, <span class="Type">long</span> n,
+                        mulmod_precon_t bninv);
+<span class="Comment">// bninv == MulModPrecon(b, n, ninv)</span>
+
+
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                               Shift Operations</span>
+
+<span class="Comment">LeftShift by n means multiplication by 2^n</span>
+<span class="Comment">RightShift by n means division by 2^n, with truncation toward zero</span>
+<span class="Comment">  (so the sign is preserved).</span>
+
+<span class="Comment">A negative shift amount reverses the direction of the shift.</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+<span class="Comment">// operator notation:</span>
+
+ZZ <span class="Statement">operator</span>&lt;&lt;(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> n);
+ZZ <span class="Statement">operator</span>&gt;&gt;(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> n);
+
+ZZ&amp; <span class="Statement">operator</span>&lt;&lt;=(ZZ&amp; x, <span class="Type">long</span> n);
+ZZ&amp; <span class="Statement">operator</span>&gt;&gt;=(ZZ&amp; x, <span class="Type">long</span> n);
+
+<span class="Comment">// procedural versions:</span>
+
+<span class="Type">void</span> LeftShift(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> n);
+ZZ LeftShift(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> n);
+
+<span class="Type">void</span> RightShift(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> n);
+ZZ RightShift(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> n);
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                              Bits and Bytes</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+
+<span class="Type">long</span> MakeOdd(ZZ&amp; x);
+<span class="Comment">// removes factors of 2 from x, returns the number of 2's removed</span>
+<span class="Comment">// returns 0 if x == 0</span>
+
+<span class="Type">long</span> NumTwos(<span class="Type">const</span> ZZ&amp; x);
+<span class="Comment">// returns max e such that 2^e divides x if x != 0, and returns 0 if x == 0.</span>
+
+<span class="Type">long</span> IsOdd(<span class="Type">const</span> ZZ&amp; a); <span class="Comment">// test if a is odd</span>
+
+<span class="Type">long</span> NumBits(<span class="Type">const</span> ZZ&amp; a);
+<span class="Type">long</span> NumBits(<span class="Type">long</span> a);
+<span class="Comment">// returns the number of bits in binary represenation of |a|; </span>
+<span class="Comment">// NumBits(0) = 0</span>
+
+
+<span class="Type">long</span> bit(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> k);
+<span class="Type">long</span> bit(<span class="Type">long</span> a, <span class="Type">long</span> k);
+<span class="Comment">// returns bit k of |a|, position 0 being the low-order bit.</span>
+<span class="Comment">// If  k &lt; 0 or k &gt;= NumBits(a), returns 0.</span>
+
+
+<span class="Type">void</span> trunc(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> k);
+<span class="Comment">// x = low order k bits of |a|. </span>
+<span class="Comment">// If k &lt;= 0, x = 0.</span>
+
+<span class="Comment">// two functional variants:</span>
+ZZ trunc_ZZ(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> k);
+<span class="Type">long</span> trunc_long(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> k);
+
+<span class="Type">long</span> SetBit(ZZ&amp; x, <span class="Type">long</span> p);
+<span class="Comment">// returns original value of p-th bit of |a|, and replaces p-th bit of</span>
+<span class="Comment">// a by 1 if it was zero; low order bit is bit 0; error if p &lt; 0;</span>
+<span class="Comment">// the sign of x is maintained</span>
+
+<span class="Type">long</span> SwitchBit(ZZ&amp; x, <span class="Type">long</span> p);
+<span class="Comment">// returns original value of p-th bit of |a|, and switches the value</span>
+<span class="Comment">// of p-th bit of a; low order bit is bit 0; error if p &lt; 0</span>
+<span class="Comment">// the sign of x is maintained</span>
+
+<span class="Type">long</span> weight(<span class="Type">const</span> ZZ&amp; a); <span class="Comment">// returns Hamming weight of |a|</span>
+<span class="Type">long</span> weight(<span class="Type">long</span> a);
+
+<span class="Comment">// bit-wise Boolean operations, procedural form:</span>
+
+<span class="Type">void</span> bit_and(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// x = |a| AND |b|</span>
+<span class="Type">void</span> bit_or(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// x = |a| OR |b|</span>
+<span class="Type">void</span> bit_xor(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b); <span class="Comment">// x = |a| XOR |b|</span>
+
+<span class="Comment">// bit-wise Boolean operations, operator notation:</span>
+
+ZZ <span class="Statement">operator</span>&amp;(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+ZZ <span class="Statement">operator</span>|(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+ZZ <span class="Statement">operator</span>^(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; b);
+
+<span class="Comment">// PROMOTIONS: the above bit-wise operations (both procedural </span>
+<span class="Comment">// and operator forms) provide promotions from long to ZZ on (a, b).</span>
+
+ZZ&amp; <span class="Statement">operator</span>&amp;=(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; b);
+ZZ&amp; <span class="Statement">operator</span>&amp;=(ZZ&amp; x, <span class="Type">long</span> b);
+
+ZZ&amp; <span class="Statement">operator</span>|=(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; b);
+ZZ&amp; <span class="Statement">operator</span>|=(ZZ&amp; x, <span class="Type">long</span> b);
+
+ZZ&amp; <span class="Statement">operator</span>^=(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; b);
+ZZ&amp; <span class="Statement">operator</span>^=(ZZ&amp; x, <span class="Type">long</span> b);
+
+
+
+<span class="Comment">// conversions between byte sequences and ZZ's</span>
+
+<span class="Type">void</span> ZZFromBytes(ZZ&amp; x, <span class="Type">const</span> <span class="Type">unsigned</span> <span class="Type">char</span> *p, <span class="Type">long</span> n);
+ZZ ZZFromBytes(<span class="Type">const</span> <span class="Type">unsigned</span> <span class="Type">char</span> *p, <span class="Type">long</span> n);
+<span class="Comment">// x = sum(p[i]*256^i, i=0..n-1). </span>
+<span class="Comment">// NOTE: in the unusual event that a char is more than 8 bits, </span>
+<span class="Comment">//       only the low order 8 bits of p[i] are used</span>
+
+<span class="Type">void</span> BytesFromZZ(<span class="Type">unsigned</span> <span class="Type">char</span> *p, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> n);
+<span class="Comment">// Computes p[0..n-1] such that abs(a) == sum(p[i]*256^i, i=0..n-1) mod 256^n.</span>
+
+<span class="Type">long</span> NumBytes(<span class="Type">const</span> ZZ&amp; a);
+<span class="Type">long</span> NumBytes(<span class="Type">long</span> a);
+<span class="Comment">// returns # of base 256 digits needed to represent abs(a).</span>
+<span class="Comment">// NumBytes(0) == 0.</span>
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                            Pseudo-Random Numbers</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+<span class="Comment">// Routines for generating pseudo-random numbers.</span>
+
+<span class="Comment">// These routines generate high qualtity, cryptographically strong</span>
+<span class="Comment">// pseudo-random numbers.  They are implemented so that their behaviour</span>
+<span class="Comment">// is completely independent of the underlying hardware and long </span>
+<span class="Comment">// integer implementation.  Note, however, that other routines </span>
+<span class="Comment">// throughout NTL use pseudo-random numbers, and because of this,</span>
+<span class="Comment">// the word size of the machine can impact the sequence of numbers</span>
+<span class="Comment">// seen by a client program.</span>
+
+
+<span class="Type">void</span> SetSeed(<span class="Type">const</span> ZZ&amp; s);
+<span class="Comment">// Initializes generator with a &quot;seed&quot; s.</span>
+<span class="Comment">// s is first hashed to generate the initial state, so it is</span>
+<span class="Comment">// not necessary that s itself looks random, just that </span>
+<span class="Comment">// it has a lot of &quot;entropy&quot;.</span>
+<span class="Comment">// If SetSeed is not called before using the routines below,</span>
+<span class="Comment">// a default initial state is used.</span>
+<span class="Comment">// Calling SetSeed with s == 0, e.g. SetSeed(ZZ::zero()), </span>
+<span class="Comment">// has the effect of re-setting the state to the default initial state.</span>
+<span class="Comment">// Routine ZZFromBytes (above) may be useful.</span>
+
+
+<span class="Type">void</span> RandomBnd(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; n);
+ZZ RandomBnd(<span class="Type">const</span> ZZ&amp; n);
+<span class="Type">long</span> RandomBnd(<span class="Type">long</span> n);
+<span class="Comment">// x = pseudo-random number in the range 0..n-1, or 0 if n &lt;= 0</span>
+
+<span class="Type">void</span> RandomBits(ZZ&amp; x, <span class="Type">long</span> l);
+ZZ RandomBits_ZZ(<span class="Type">long</span> l);
+<span class="Type">long</span> RandomBits_long(<span class="Type">long</span> l);
+<span class="Comment">// x = pseudo-random number in the range 0..2^l-1.</span>
+
+<span class="Type">void</span> RandomLen(ZZ&amp; x, <span class="Type">long</span> l);
+ZZ RandomLen_ZZ(<span class="Type">long</span> l);
+<span class="Type">long</span> RandomLen_long(<span class="Type">long</span> l);
+<span class="Comment">// x = psuedo-random number with precisely l bits,</span>
+<span class="Comment">// or 0 of l &lt;= 0.</span>
+
+<span class="Type">unsigned</span> <span class="Type">long</span> RandomBits_ulong(<span class="Type">long</span> l);
+<span class="Comment">// returns a pseudo-random number in the range 0..2^l-1</span>
+
+<span class="Type">unsigned</span> <span class="Type">long</span> RandomWord();
+<span class="Comment">// returns a word filled with pseudo-random bits.</span>
+<span class="Comment">// Equivalent to RandomBits_ulong(NTL_BITS_PER_LONG).</span>
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">             Incremental Chinese Remaindering</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+<span class="Type">long</span> CRT(ZZ&amp; a, ZZ&amp; p, <span class="Type">const</span> ZZ&amp; A, <span class="Type">const</span> ZZ&amp; P);
+<span class="Type">long</span> CRT(ZZ&amp; a, ZZ&amp; p, <span class="Type">long</span> A, <span class="Type">long</span> P);
+
+<span class="Comment">// 0 &lt;= A &lt; P, (p, P) = 1; computes a' such that a' = a mod p, </span>
+<span class="Comment">// a' = A mod P, and -p*P/2 &lt; a' &lt;= p*P/2; sets a := a', p := p*P, and</span>
+<span class="Comment">// returns 1 if a's value has changed, otherwise 0</span>
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                  Rational Reconstruction</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+<span class="Type">long</span> ReconstructRational(ZZ&amp; a, ZZ&amp; b, <span class="Type">const</span> ZZ&amp; x, <span class="Type">const</span> ZZ&amp; m,
+                         <span class="Type">const</span> ZZ&amp; a_bound, <span class="Type">const</span> ZZ&amp; b_bound);
+
+<span class="Comment">// 0 &lt;= x &lt; m, m &gt; 2 * a_bound * b_bound,</span>
+<span class="Comment">// a_bound &gt;= 0, b_bound &gt; 0</span>
+
+<span class="Comment">// This routine either returns 0, leaving a and b unchanged, </span>
+<span class="Comment">// or returns 1 and sets a and b so that</span>
+<span class="Comment">//   (1) a = b x (mod m),</span>
+<span class="Comment">//   (2) |a| &lt;= a_bound, 0 &lt; b &lt;= b_bound, and</span>
+<span class="Comment">//   (3) gcd(m, b) = gcd(a, b).</span>
+
+<span class="Comment">// If there exist a, b satisfying (1), (2), and </span>
+<span class="Comment">//   (3') gcd(m, b) = 1,</span>
+<span class="Comment">// then a, b are uniquely determined if we impose the additional</span>
+<span class="Comment">// condition that gcd(a, b) = 1;  moreover, if such a, b exist,</span>
+<span class="Comment">// then these values are returned by the routine.</span>
+
+<span class="Comment">// Unless the calling routine can *a priori* guarantee the existence</span>
+<span class="Comment">// of a, b satisfying (1), (2), and (3'),</span>
+<span class="Comment">// then to ensure correctness, the calling routine should check</span>
+<span class="Comment">// that gcd(m, b) = 1, or equivalently, gcd(a, b) = 1.</span>
+
+<span class="Comment">// This is implemented using a variant of Lehmer's extended</span>
+<span class="Comment">// Euclidean algorithm.</span>
+
+<span class="Comment">// Literature:  see G. Collins and M. Encarnacion, J. Symb. Comp. 20:287-297, </span>
+<span class="Comment">// 1995; P. Wang, M. Guy, and J. Davenport, SIGSAM Bulletin 16:2-3, 1982. </span>
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                                Primality Testing </span>
+<span class="Comment">                           and Prime Number Generation</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+<span class="Type">void</span> GenPrime(ZZ&amp; n, <span class="Type">long</span> l, <span class="Type">long</span> err = <span class="Constant">80</span>);
+ZZ GenPrime_ZZ(<span class="Type">long</span> l, <span class="Type">long</span> err = <span class="Constant">80</span>);
+<span class="Type">long</span> GenPrime_long(<span class="Type">long</span> l, <span class="Type">long</span> err = <span class="Constant">80</span>);
+
+<span class="Comment">// GenPrime generates a random prime n of length l so that the</span>
+<span class="Comment">// probability that the resulting n is composite is bounded by 2^(-err).</span>
+<span class="Comment">// This calls the routine RandomPrime below, and uses results of </span>
+<span class="Comment">// Damgard, Landrock, Pomerance to &quot;optimize&quot; </span>
+<span class="Comment">// the number of Miller-Rabin trials at the end.</span>
+
+<span class="Type">void</span> GenGermainPrime(ZZ&amp; n, <span class="Type">long</span> l, <span class="Type">long</span> err = <span class="Constant">80</span>);
+ZZ GenGermainPrime_ZZ(<span class="Type">long</span> l, <span class="Type">long</span> err = <span class="Constant">80</span>);
+<span class="Type">long</span> GenGermainPrime_long(<span class="Type">long</span> l, <span class="Type">long</span> err = <span class="Constant">80</span>);
+
+<span class="Comment">// A (Sophie) Germain prime is a prime p such that p' = 2*p+1 is also a prime.</span>
+<span class="Comment">// Such primes are useful for cryptographic applications...cryptographers</span>
+<span class="Comment">// sometimes call p' a &quot;strong&quot; or &quot;safe&quot; prime.</span>
+<span class="Comment">// GenGermainPrime generates a random Germain prime n of length l</span>
+<span class="Comment">// so that the probability that either n or 2*n+1 is not a prime</span>
+<span class="Comment">// is bounded by 2^(-err).</span>
+
+
+<span class="Type">long</span> ProbPrime(<span class="Type">const</span> ZZ&amp; n, <span class="Type">long</span> NumTrials = <span class="Constant">10</span>);
+<span class="Type">long</span> ProbPrime(<span class="Type">long</span> n, <span class="Type">long</span> NumTrials = <span class="Constant">10</span>);
+<span class="Comment">// performs up to NumTrials Miller-witness tests (after some trial division).</span>
+
+<span class="Type">void</span> RandomPrime(ZZ&amp; n, <span class="Type">long</span> l, <span class="Type">long</span> NumTrials=<span class="Constant">10</span>);
+ZZ RandomPrime_ZZ(<span class="Type">long</span> l, <span class="Type">long</span> NumTrials=<span class="Constant">10</span>);
+<span class="Type">long</span> RandomPrime_long(<span class="Type">long</span> l, <span class="Type">long</span> NumTrials=<span class="Constant">10</span>);
+<span class="Comment">// n = random l-bit prime.  Uses ProbPrime with NumTrials.</span>
+
+<span class="Type">void</span> NextPrime(ZZ&amp; n, <span class="Type">const</span> ZZ&amp; m, <span class="Type">long</span> NumTrials=<span class="Constant">10</span>);
+ZZ NextPrime(<span class="Type">const</span> ZZ&amp; m, <span class="Type">long</span> NumTrials=<span class="Constant">10</span>);
+<span class="Comment">// n = smallest prime &gt;= m.  Uses ProbPrime with NumTrials.</span>
+
+<span class="Type">long</span> NextPrime(<span class="Type">long</span> m, <span class="Type">long</span> NumTrials=<span class="Constant">10</span>);
+<span class="Comment">// Single precision version of the above.</span>
+<span class="Comment">// Result will always be bounded by NTL_ZZ_SP_BOUND, and an</span>
+<span class="Comment">// error is raised if this cannot be satisfied.</span>
+
+<span class="Type">long</span> MillerWitness(<span class="Type">const</span> ZZ&amp; n, <span class="Type">const</span> ZZ&amp; w);
+<span class="Comment">// Tests if w is a witness to compositeness a la Miller.  Assumption: n is</span>
+<span class="Comment">// odd and positive, 0 &lt;= w &lt; n.</span>
+<span class="Comment">// Return value of 1 implies n is composite.</span>
+<span class="Comment">// Return value of 0 indicates n might be prime.</span>
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                               Exponentiation</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+<span class="Type">void</span> power(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> e); <span class="Comment">// x = a^e (e &gt;= 0)</span>
+ZZ power(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> e);
+
+<span class="Type">void</span> power(ZZ&amp; x, <span class="Type">long</span> a, <span class="Type">long</span> e);
+
+<span class="Comment">// two functional variants:</span>
+ZZ power_ZZ(<span class="Type">long</span> a, <span class="Type">long</span> e);
+<span class="Type">long</span> power_long(<span class="Type">long</span> a, <span class="Type">long</span> e);
+
+<span class="Type">void</span> power2(ZZ&amp; x, <span class="Type">long</span> e); <span class="Comment">// x = 2^e (e &gt;= 0)</span>
+ZZ power2_ZZ(<span class="Type">long</span> e);
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                               Square Roots</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+<span class="Type">void</span> SqrRoot(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a); <span class="Comment">// x = floor(a^{1/2}) (a &gt;= 0)</span>
+ZZ SqrRoot(<span class="Type">const</span> ZZ&amp; a);
+
+<span class="Type">long</span> SqrRoot(<span class="Type">long</span> a);
+
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                    Jacobi symbol and modular square roots</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+<span class="Type">long</span> Jacobi(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n);
+<span class="Comment">//  compute Jacobi symbol of a and n; assumes 0 &lt;= a &lt; n, n odd</span>
+
+<span class="Type">void</span> SqrRootMod(ZZ&amp; x, <span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n);
+ZZ SqrRootMod(<span class="Type">const</span> ZZ&amp; a, <span class="Type">const</span> ZZ&amp; n);
+<span class="Comment">//  computes square root of a mod n; assumes n is an odd prime, and</span>
+<span class="Comment">//  that a is a square mod n, with 0 &lt;= a &lt; n.</span>
+
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                             Input/Output</span>
+
+<span class="Comment">I/O Format:</span>
+
+<span class="Comment">Numbers are written in base 10, with an optional minus sign.</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+istream&amp; <span class="Statement">operator</span>&gt;&gt;(istream&amp; s, ZZ&amp; x);
+ostream&amp; <span class="Statement">operator</span>&lt;&lt;(ostream&amp; s, <span class="Type">const</span> ZZ&amp; a);
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                            Miscellany</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+<span class="Comment">// The following macros are defined:</span>
+
+<span class="PreProc">#define NTL_ZZ_NBITS (...)  </span><span class="Comment">// number of bits in a zzigit;</span>
+                            <span class="Comment">// a ZZ is represented as a sequence of zzigits.</span>
+
+<span class="PreProc">#define NTL_SP_NBITS (...)  </span><span class="Comment">// max number of bits in a &quot;single-precision&quot; number</span>
+
+<span class="PreProc">#define NTL_WSP_NBITS (...)  </span><span class="Comment">// max number of bits in a &quot;wide single-precision&quot;</span>
+                             <span class="Comment">// number</span>
+
+<span class="Comment">// The following relations hold:</span>
+<span class="Comment">//    NTL_SP_NBITS &lt;= NTL_WSP_NBITS &lt;= NTL_ZZ_NBITS</span>
+<span class="Comment">//    26 &lt;= NTL_SP_NBITS &lt;= min(NTL_BITS_PER_LONG-2, NTL_DOUBLE_PRECISION-3)</span>
+<span class="Comment">//    NTL_WSP_NBITS &lt;= NTL_BITS_PER_LONG-2</span>
+<span class="Comment">//</span>
+<span class="Comment">// Note that NTL_ZZ_NBITS may be less than, equal to, or greater than</span>
+<span class="Comment">// NTL_BITS_PER_LONG  -- no particular relationship should be assumed to hold.</span>
+<span class="Comment">// In particular, expressions like (1L &lt;&lt; NTL_ZZ_BITS) might overflow.</span>
+<span class="Comment">//</span>
+<span class="Comment">// &quot;single-precision&quot; numbers are meant to be used in conjunction with the</span>
+<span class="Comment">//  single-precision modular arithmetic routines.</span>
+<span class="Comment">//</span>
+<span class="Comment">// &quot;wide single-precision&quot; numbers are meant to be used in conjunction</span>
+<span class="Comment">//  with the ZZ arithmetic routines for optimal efficiency.</span>
+
+<span class="Comment">// The following auxilliary macros are also defined</span>
+
+<span class="PreProc">#define NTL_FRADIX (...) </span><span class="Comment">// double-precision value of 2^NTL_ZZ_NBITS</span>
+
+<span class="PreProc">#define NTL_SP_BOUND (</span><span class="Constant">1L</span><span class="PreProc"> &lt;&lt; NTL_SP_NBITS)</span>
+<span class="PreProc">#define NTL_WSP_BOUND (</span><span class="Constant">1L</span><span class="PreProc"> &lt;&lt; NTL_WSP_NBITS)</span>
+
+
+<span class="Comment">// Backward compatability note:</span>
+<span class="Comment">// Prior to version 5.0, the macro NTL_NBITS was defined,</span>
+<span class="Comment">// along with the macro NTL_RADIX defined to be (1L &lt;&lt; NTL_NBITS).</span>
+<span class="Comment">// While these macros are still available when using NTL's traditional </span>
+<span class="Comment">// long integer package (i.e., when NTL_GMP_LIP is not set), </span>
+<span class="Comment">// they are not available when using the GMP as the primary long integer </span>
+<span class="Comment">// package (i.e., when NTL_GMP_LIP is set).</span>
+<span class="Comment">// Furthermore, when writing portable programs, one should avoid these macros.</span>
+<span class="Comment">// Note that when using traditional long integer arithmetic, we have</span>
+<span class="Comment">//    NTL_ZZ_NBITS = NTL_SP_NBITS = NTL_WSP_NBITS = NTL_NBITS.</span>
+
+
+<span class="Comment">// Here are some additional functions.</span>
+
+<span class="Type">void</span> clear(ZZ&amp; x); <span class="Comment">// x = 0</span>
+<span class="Type">void</span> set(ZZ&amp; x);   <span class="Comment">// x = 1</span>
+
+<span class="Type">void</span> swap(ZZ&amp; x, ZZ&amp; y);
+<span class="Comment">// swap x and y (done by &quot;pointer swapping&quot;, if possible).</span>
+
+<span class="Type">double</span> log(<span class="Type">const</span> ZZ&amp; a);
+<span class="Comment">// returns double precision approximation to log(a)</span>
+
+<span class="Type">long</span> NextPowerOfTwo(<span class="Type">long</span> m);
+<span class="Comment">// returns least nonnegative k such that 2^k &gt;= m</span>
+
+<span class="Type">long</span> ZZ::size() <span class="Type">const</span>;
+<span class="Comment">// a.size() returns the number of zzigits of |a|; the</span>
+<span class="Comment">// size of 0 is 0.</span>
+
+<span class="Type">void</span> ZZ::SetSize(<span class="Type">long</span> k)
+<span class="Comment">// a.SetSize(k) does not change the value of a, but simply pre-allocates</span>
+<span class="Comment">// space for k zzigits.</span>
+
+<span class="Type">long</span> ZZ::SinglePrecision() <span class="Type">const</span>;
+<span class="Comment">// a.SinglePrecision() is a predicate that tests if abs(a) &lt; NTL_SP_BOUND</span>
+
+<span class="Type">long</span> ZZ::WideSinglePrecision() <span class="Type">const</span>;
+<span class="Comment">// a.WideSinglePrecision() is a predicate that tests if abs(a) &lt; NTL_WSP_BOUND</span>
+
+<span class="Type">long</span> digit(<span class="Type">const</span> ZZ&amp; a, <span class="Type">long</span> k);
+<span class="Comment">// returns k-th zzigit of |a|, position 0 being the low-order</span>
+<span class="Comment">// zzigit.</span>
+<span class="Comment">// NOTE: this routine is only available when using NTL's traditional</span>
+<span class="Comment">// long integer arithmetic, and should not be used in programs</span>
+<span class="Comment">// that are meant to be portable.</span>
+
+<span class="Type">void</span> ZZ::kill();
+<span class="Comment">// a.kill() sets a to zero and frees the space held by a.</span>
+
+ZZ::ZZ(INIT_SIZE_TYPE, <span class="Type">long</span> k);
+<span class="Comment">// ZZ(INIT_SIZE, k) initializes to 0, but space is pre-allocated so</span>
+<span class="Comment">// that numbers x with x.size() &lt;= k can be stored without</span>
+<span class="Comment">// re-allocation.</span>
+
+<span class="Type">static</span> <span class="Type">const</span> ZZ&amp; ZZ::zero();
+<span class="Comment">// ZZ::zero() yields a read-only reference to zero, if you need it.</span>
+
+
+
+
+<span class="Comment">/*</span><span class="Comment">*************************************************************************\</span>
+
+<span class="Comment">                    Small Prime Generation</span>
+
+<span class="Comment">primes are generated in sequence, starting at 2, and up to a maximum</span>
+<span class="Comment">that is no more than min(NTL_SP_BOUND, 2^30).</span>
+
+<span class="Comment">Example: print the primes up to 1000</span>
+
+<span class="Comment">#include &lt;NTL/ZZ.h&gt;</span>
+
+<span class="Comment">main()</span>
+<span class="Comment">{</span>
+<span class="Comment">   PrimeSeq s;</span>
+<span class="Comment">   long p;</span>
+
+<span class="Comment">   p = s.next();</span>
+<span class="Comment">   while (p &lt;= 1000) {</span>
+<span class="Comment">      cout &lt;&lt; p &lt;&lt; &quot;\n&quot;;</span>
+<span class="Comment">      p = s.next();</span>
+<span class="Comment">   }</span>
+<span class="Comment">}</span>
+
+<span class="Comment">\*************************************************************************</span><span class="Comment">*/</span>
+
+
+
+<span class="Type">class</span> PrimeSeq {
+<span class="Statement">public</span>:
+   PrimeSeq();
+   ~PrimeSeq();
+
+   <span class="Type">long</span> next();
+   <span class="Comment">// returns next prime in the sequence.  returns 0 if list of small</span>
+   <span class="Comment">// primes is exhausted.</span>
+
+   <span class="Type">void</span> reset(<span class="Type">long</span> b);
+   <span class="Comment">// resets generator so that the next prime in the sequence is the</span>
+   <span class="Comment">// smallest prime &gt;= b.</span>
+
+<span class="Statement">private</span>:
+   PrimeSeq(<span class="Type">const</span> PrimeSeq&amp;);        <span class="Comment">// disabled</span>
+   <span class="Type">void</span> <span class="Statement">operator</span>=(<span class="Type">const</span> PrimeSeq&amp;);  <span class="Comment">// disabled</span>
+
+};
+
+
+</pre>
+</body>
+</html>

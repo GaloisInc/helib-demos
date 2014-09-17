@@ -1,0 +1,14 @@
+#!/bin/bash
+
+VIM=$HOME/Applications/MacVim/mvim
+
+cd ../doc
+
+for i in $*
+do
+   name=`basename $i .txt`
+   cp $name.txt $name.cpp
+   $VIM $name.cpp '+set nu!' '+TOhtml' '+w' '+qa!'
+done
+   
+
