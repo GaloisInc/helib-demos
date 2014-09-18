@@ -11,7 +11,6 @@ aes: enc_aes.cc
 
 try: try.cc
 	$(CC) $(CFLAGS) try.cc $(FHE)/fhe.a $(NTL)/src/ntl.a -o try $(LFLAGS)
-	./try
 
 clean:
 	rm -f aes
