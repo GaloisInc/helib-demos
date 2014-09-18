@@ -1,12 +1,19 @@
-CWD=$(shell pwd)
 CC=g++
-CFLAGS=-I$(CWD)/HElib/src -I$(CWD)/ntl-6.2.1/include
-LFLAGS=-L/usr/local/lib -L$(CWD)/ntl-6.2.1/src -lntl
+NTL=$(PWD)/ntl-6.2.1/src
+FHE=$(PWD)/HElib/src
+CFLAGS=-I$(FHE)
+LFLAGS=-L$(NTL) -lntl
 
 all: aes
 
-aes: enc_aes.cc
-	$(CC) $(CFLAGS) enc_aes.cc $(CWD)/HElib/src/fhe.a $(CWD)/ntl-6.2.1/src/ntl.a -o aes $(LFLAGS)
+aes: enc_aes.cc ntl helib
+	$(CC) $(CFLAGS) enc_aes.cc $(NTL)/ntl.a $(FHE)/fhe.a -o aes $(LFLAGS)
 
 clean:
 	rm -f aes
+
+ntl:
+	cd $(NTL); make
+
+helib:
+	cd $(FHE); make
