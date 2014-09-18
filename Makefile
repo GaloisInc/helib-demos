@@ -6,18 +6,12 @@ LFLAGS=-L$(NTL) -lntl
 
 all: aes try
 
-aes: enc_aes.cc ntl helib
+aes: enc_aes.cc
 	$(CC) $(CFLAGS) enc_aes.cc $(NTL)/ntl.a $(FHE)/fhe.a -o aes $(LFLAGS)
 
-try: try.cc ntl helib
+try: try.cc
 	$(CC) $(CFLAGS) try.cc $(NTL)/ntl.a $(FHE)/fhe.a -o try $(LFLAGS)
 	./try
 
 clean:
 	rm -f aes
-
-ntl:
-	cd $(NTL); make
-
-helib:
-	cd $(FHE); make
