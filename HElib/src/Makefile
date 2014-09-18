@@ -8,14 +8,14 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 # See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-# 
-CC = g++
 #
-CFLAGS = -g -O2 -Wfatal-errors -Wshadow -Wall -I/usr/local/include
+CC = g++
+NTL=$(PWD)/../../ntl-6.2.1/include
+CFLAGS = -g -O2 -Wfatal-errors -Wshadow -Wall -I/usr/local/include -I$(NTL)
 
 #  If you get compilation errors, you may need to add -std=c++11 or -std=c++0x
 #CFLAGS = -g -O2  -Wfatal-errors -Wshadow -Wall -I/usr/local/include -std=c++11 -lstdc++
@@ -31,8 +31,8 @@ $(info )
 LD = g++
 AR = ar
 ARFLAGS=ruv
-GMP=-lgmp 
-LDLIBS = -L/usr/local/lib -lntl $(GMP) -lm
+GMP=-lgmp
+LDLIBS = -L$(NTL) -lntl $(GMP) -lm
 
 HEADER = EncryptedArray.h FHE.h Ctxt.h CModulus.h FHEContext.h PAlgebra.h SingleCRT.h DoubleCRT.h NumbTh.h bluestein.h IndexSet.h timing.h IndexMap.h replicate.h hypercube.h matching.h powerful.h permutations.h polyEval.h
 
