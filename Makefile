@@ -1,23 +1,23 @@
 CC=g++
-NTL=$(PWD)/ntl-6.2.1/src
+NTL=$(PWD)/ntl-6.2.1
 FHE=$(PWD)/HElib/src
-CFLAGS=-I$(FHE)
-LFLAGS=-L$(NTL) -lntl
+CFLAGS=-I$(FHE) -I$(NTL)/include
+LFLAGS=-L/usr/local/lib -L$(NTL)/src
 
 all: aes try
 
-aes: helib enc_aes.cc
-	$(CC) $(CFLAGS) enc_aes.cc $(NTL)/ntl.a $(FHE)/fhe.a -o aes $(LFLAGS)
+aes: enc_aes.cc
+	$(CC) $(CFLAGS) enc_aes.cc $(FHE)/fhe.a $(NTL)/src/ntl.a -o aes $(LFLAGS)
 
-try: helib try.cc
-	$(CC) $(CFLAGS) try.cc $(NTL)/ntl.a $(FHE)/fhe.a -o try $(LFLAGS)
+try: try.cc
+	$(CC) $(CFLAGS) try.cc $(FHE)/fhe.a $(NTL)/src/ntl.a -o try $(LFLAGS)
 	./try
 
 clean:
 	rm -f aes
-	 
+
 ntl:
-	cd ntl-6.2.1/src; make
+	cd ntl-6.2.1/src; ./configure; make
 
 helib: ntl
 	cd HElib/src/; make
