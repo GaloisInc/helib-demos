@@ -4,13 +4,13 @@ FHE=$(PWD)/HElib/src
 CFLAGS=-I$(FHE) -I$(NTL)/include
 LFLAGS=-L/usr/local/lib -L$(NTL)/src
 
-all: aes try
+all: aes example
 
 aes: enc_aes.cc
 	$(CC) $(CFLAGS) enc_aes.cc $(FHE)/fhe.a $(NTL)/src/ntl.a -o aes $(LFLAGS)
 
-try: try.cc
-	$(CC) $(CFLAGS) try.cc $(FHE)/fhe.a $(NTL)/src/ntl.a -o try $(LFLAGS)
+example: blog_example.cc
+	$(CC) $(CFLAGS) blog_example.cc $(FHE)/fhe.a $(NTL)/src/ntl.a -o example $(LFLAGS)
 
 clean:
 	rm -f aes
