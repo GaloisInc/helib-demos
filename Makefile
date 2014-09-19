@@ -1,10 +1,13 @@
 CC=g++
 NTL=$(PWD)/ntl-6.2.1
 FHE=$(PWD)/HElib/src
-CFLAGS=-I$(FHE) -I$(NTL)/include
+CFLAGS=-std=c++11 -I$(FHE) -I$(NTL)/include
 LFLAGS=-L/usr/local/lib -L$(NTL)/src
 
-all: aes example
+all: aes example simon
+
+simon: enc_aes.cc
+	$(CC) $(CFLAGS) simon.cc $(FHE)/fhe.a $(NTL)/src/ntl.a -o simon $(LFLAGS)
 
 aes: enc_aes.cc
 	$(CC) $(CFLAGS) enc_aes.cc $(FHE)/fhe.a $(NTL)/src/ntl.a -o aes $(LFLAGS)
@@ -14,6 +17,8 @@ example: blog_example.cc
 
 clean:
 	rm -f aes
+	rm -f example
+	rm -f simon
 
 ntl:
 	cd ntl-6.2.1/src; ./configure; make
