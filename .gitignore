@@ -1,7 +1,8 @@
 *.o
 *.a
+ntl-6.2.1/*
+HElib/*
 aes
 try
 simon
-ntl-6.2.1/*
 example
