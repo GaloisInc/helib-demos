@@ -1,7 +1,7 @@
 *.o
 *.a
-aes
-try
-simon
 ntl-6.2.1/*
+HElib/*
+aes
+simon
 example
