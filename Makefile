@@ -1,7 +1,7 @@
 CC=g++
 NTL=$(PWD)/ntl-6.2.1
 FHE=$(PWD)/HElib/src
-CFLAGS=-std=c++11 -I$(FHE) -I$(NTL)/include
+CFLAGS=-std=c++11 -I$(FHE) -I$(NTL)/include -g
 LFLAGS=-L/usr/local/lib -L$(NTL)/src
 
 all: aes example simon
