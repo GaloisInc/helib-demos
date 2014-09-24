@@ -15,7 +15,7 @@
 #
 CC = g++
 NTL=$(PWD)/../../ntl-6.2.1/include
-CFLAGS = -g -O2 -Wfatal-errors -Wshadow -Wall -I/usr/local/include -I$(NTL)
+CFLAGS = -std=c++11 -g -O2 -Wfatal-errors -Wshadow -Wall -I/usr/local/include -I$(NTL)
 
 #  If you get compilation errors, you may need to add -std=c++11 or -std=c++0x
 #CFLAGS = -g -O2  -Wfatal-errors -Wshadow -Wall -I/usr/local/include -std=c++11 -lstdc++

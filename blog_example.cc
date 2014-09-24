@@ -1,3 +1,5 @@
+// this is the example from Tom's blog
+
 #include "FHE.h"
 // #include "FHEContext.h"
 #include "EncryptedArray.h"

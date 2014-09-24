@@ -23,5 +23,5 @@ clean:
 ntl:
 	cd ntl-6.2.1/src; ./configure; make
 
-helib: ntl
+helib:
 	cd HElib/src/; make
