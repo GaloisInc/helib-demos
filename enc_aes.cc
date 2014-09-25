@@ -146,7 +146,7 @@ EncryptedArray* global_ea;
 FHESecKey* secret_key;
 
 void sub_bytes(CtxtByte& b) {
-    static vector<ZZX> c;
+    static vector<NTL::ZZX> c;
     if (c.size() == 0) {
         // if c hasn't been filled in yet,
         // we need to generate the constant 0x1b
@@ -155,7 +155,7 @@ void sub_bytes(CtxtByte& b) {
         PlaintextArray one_p(*global_ea);
         zero_p.replicate(0);
         one_p.replicate(1);
-        ZZX zero, one;
+        NTL::ZZX zero, one;
         global_ea->encode(zero, zero_p);
         global_ea->encode(one, one_p);
         // because 0b00011011 == 0x1b
@@ -202,7 +202,7 @@ void shift_rows(aes_state& input) {
 }
 
 void mix_byte_shift(CtxtByte& b) {
-    static vector<ZZX> oneBee;
+    static vector<NTL::ZZX> oneBee;
     if (oneBee.size() == 0) {
         // if oneBee hasn't been filled in yet,
         // we need to generate the constant 0x1b
@@ -211,7 +211,7 @@ void mix_byte_shift(CtxtByte& b) {
         PlaintextArray one_p(*global_ea);
         zero_p.replicate(0);
         one_p.replicate(1);
-        ZZX zero, one;
+        NTL::ZZX zero, one;
         global_ea->encode(zero, zero_p);
         global_ea->encode(one, one_p);
         // because 0b00011011 == 0x1b
@@ -327,7 +327,7 @@ int main(int argc, char **argv) {
     long w=64;
     long d=0;
     long security=128;
-    ZZX G;
+    NTL::ZZX G;
 
     u8 key_bytes[16] = {
       0x2b, 0x7e,
