@@ -32,6 +32,7 @@ int main(int argc, char **argv)
   cout << "generated key" << endl;
 
   EncryptedArray ea(context, G);
+  PlaintextArray pa(ea);
   long nslots = ea.size();
 
   vector<long> v1;
@@ -48,24 +49,29 @@ int main(int argc, char **argv)
   }
   ea.encrypt(ct2, publicKey, v2);
 
+
   Ctxt ctSum  = ct1;
   Ctxt ctProd = ct2;
+
+  cout << ctProd.getNoiseVar() << " " << ctSum.getNoiseVar() << endl;
 
   ctSum += ct2;
   ctProd *= ct2;
 
+  cout << ctProd.getNoiseVar() << " " << ctSum.getNoiseVar() << endl;
+
   vector<long> res;
   ea.decrypt(ctSum, secretKey, res);
 
-  cout << "All computations are modulo " << p << "." << endl;
-  for (int i = 0; i < res.size(); i ++) {
-    cout << v1[i] << " + " << v2[i] << " = " << res[i] << endl;
-  }
+  //cout << "All computations are modulo " << p << "." << endl;
+  //for (int i = 0; i < res.size(); i ++) {
+    //cout << v1[i] << " + " << v2[i] << " = " << res[i] << endl;
+  //}
 
-  ea.decrypt(ctProd, secretKey, res);
-  for (int i = 0; i < res.size(); i++) {
-    cout << v1[i] << " * " << v2[i] << " = " << res[i] << endl;
-  }
+  //ea.decrypt(ctProd, secretKey, res);
+  //for (int i = 0; i < res.size(); i++) {
+    //cout << v1[i] << " * " << v2[i] << " = " << res[i] << endl;
+  //}
 
   return 0;
 }

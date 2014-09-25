@@ -361,7 +361,7 @@ int main(int argc, char **argv) {
     keyExpand(key, key_i);
 
     cout << "Initializing HElib values..." << endl;
-    m = FindM(security,L,c,p,d,1,0);
+    m = FindM(security,L,c,p,d,m,0);
 
     FHEcontext context(m, p, r);
     buildModChain(context, L, c);
