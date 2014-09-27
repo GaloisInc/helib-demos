@@ -1,5 +1,7 @@
 // this is the example from Tom's blog
 
+#define PLAINTEXT
+
 #include "FHE.h"
 // #include "FHEContext.h"
 #include "EncryptedArray.h"
@@ -7,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <sys/time.h>
+
 
 int main(int argc, char **argv)
 {
@@ -31,42 +34,49 @@ int main(int argc, char **argv)
   addSome1DMatrices(secretKey);
   cout << "generated key" << endl;
 
+  Ctxt ctxtTest(publicKey);
+  cout << (ctxtTest.isFake() ? "FAKE CIPHERTEXTS" : "REAL CIPHERTEXTS") << endl;
+
   EncryptedArray ea(context, G);
   PlaintextArray pa(ea);
   long nslots = ea.size();
 
+  cout << nslots << endl;
+
+  srand(time(NULL));
   vector<long> v1;
   for (int i = 0; i < nslots; i++) {
-    v1.push_back(i*2);
+    if (i < 32)
+      v1.push_back(rand()%2);
+    else
+      v1.push_back(0);
   }
   Ctxt ct1(publicKey);
   ea.encrypt(ct1, publicKey, v1);
 
-  vector<long> v2;
-  Ctxt ct2(publicKey);
-  for (int i = 0; i < nslots; i++) {
-    v2.push_back(i*3);
-  }
-  ea.encrypt(ct2, publicKey, v2);
+  //vector<long> v2;
+  //Ctxt ct2(publicKey);
+  //for (int i = 0; i < nslots; i++) {
+    //v2.push_back(i*3);
+  //}
+  //ea.encrypt(ct2, publicKey, v2);
 
 
-  Ctxt ctSum  = ct1;
-  Ctxt ctProd = ct2;
+  //Ctxt ctSum  = ct1;
+  //Ctxt ctProd = ct2;
 
-  cout << ctProd.getNoiseVar() << " " << ctSum.getNoiseVar() << endl;
-
-  ctSum += ct2;
-  ctProd *= ct2;
-
-  cout << ctProd.getNoiseVar() << " " << ctSum.getNoiseVar() << endl;
+  //ctSum += ct2;
+  //ctProd *= ct2;
 
   vector<long> res;
-  ea.decrypt(ctSum, secretKey, res);
+  //ea.decrypt(ctSum, secretKey, res);
+  ea.decrypt(ct1, secretKey, res);
 
-  //cout << "All computations are modulo " << p << "." << endl;
-  //for (int i = 0; i < res.size(); i ++) {
+  cout << "All computations are modulo " << p << "." << endl;
+  for (int i = 0; i < res.size(); i ++) {
     //cout << v1[i] << " + " << v2[i] << " = " << res[i] << endl;
-  //}
+    cout << v1[i] << "->" << res[i] << ", ";
+  }
 
   //ea.decrypt(ctProd, secretKey, res);
   //for (int i = 0; i < res.size(); i++) {

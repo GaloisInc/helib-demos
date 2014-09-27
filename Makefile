@@ -5,7 +5,7 @@ LFLAGS=-L/usr/local/lib -L/usr/local/include/NTL -lntl
 
 all: aes example simon
 
-simon: enc_aes.cc
+simon: simon.cc
 	$(CC) $(CFLAGS) simon.cc $(HELIB)/src/fhe.a -o simon $(LFLAGS)
 
 aes: enc_aes.cc
