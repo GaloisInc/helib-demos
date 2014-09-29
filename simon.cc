@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <ctime>
 #include "EncryptedArray.h"
+#include "permutations.h"
 #include <NTL/lzz_pXFactoring.h>
 #include <fstream>
 #include <sstream>
@@ -38,6 +39,7 @@ const int T = 44;
 
 EncryptedArray* global_ea;
 Ctxt* global_maxintCT;
+long* global_nslots;
 
 uint32_t rotateLeft(uint32_t x, int n) {
     return x << n | x >> 32 - n;
@@ -51,9 +53,9 @@ block encRound(key32 k, block inp) {
 void rotateLeft(Ctxt &x, int n) {
     Ctxt other = x;
     global_ea->shift(other, n);
-    global_ea->shift(x, 32 - n);
+    global_ea->shift(x, -(32 - n));
     x += other;
-    x *= *global_maxintCT;
+    x *= *global_maxintCT; // mask to keep leftmost (nslots-32) bits zeroed out.
 }
 
 vector<Ctxt> encRoundH(Ctxt k, vector<Ctxt> *b, int xIndex, int yIndex) {
@@ -106,6 +108,15 @@ key genKey() {
         ks.push_back(rand());
     }
     return ks;
+}
+
+uint32_t rand32() {
+    srand(time(NULL));
+    uint32_t x = 0;
+    for (int i = 0; i < 32; i++) {
+        x |= rand()%2 << i;
+    }
+    return x;
 }
 
 ciphertext simonEnc(string inp, key k) {
@@ -290,6 +301,7 @@ int main(int argc, char **argv)
     EncryptedArray ea(context, G);
     global_ea = &ea;
     long nslots = ea.size();
+    global_nslots = &nslots;
 
     // set up global maxint for masks
     vector<long> maxintVec, maxintTest;
@@ -302,13 +314,21 @@ int main(int argc, char **argv)
     // test rotation : FIXME
     cout << "Running test.." << endl;
     vector<long> testBits, result;
-    addUint32Bits(1, &testBits);
+
+    uint32_t x = rand32();
+    int n = rand() % 32;
+
+    addUint32Bits(x, &testBits);
     pad(&testBits, nslots);
     Ctxt testCT(publicKey);
     ea.encrypt(testCT, publicKey, testBits);
-    rotateLeft(testCT, 3);
+
+    rotateLeft(testCT, n);
+
     ea.decrypt(testCT, secretKey, result);
-    cout << uint32FromBits(result) << endl;
+    cout << "rotateLeft(" << x << ", " << n << ")" << endl;
+    cout << "HE = " << uint32FromBits(result) << endl;
+    cout << "PT = " << rotateLeft(x,n) << endl;
 
     return 0;
 
