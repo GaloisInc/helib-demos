@@ -35,11 +35,18 @@ typedef vector<block> ciphertext;
 
 const int m = 4;
 const int j = 3;
-const int T = 44;
+//const int T = 44;
+const int T = 4;
+
 
 EncryptedArray* global_ea;
-Ctxt* global_maxintCT;
+Ctxt* global_maxint;
+Ctxt* global_one;
+Ctxt* global_zero;
 long* global_nslots;
+const FHEPubKey* global_pubkey;
+
+// Plaintext SIMON
 
 uint32_t rotateLeft(uint32_t x, int n) {
     return x << n | x >> 32 - n;
@@ -48,19 +55,6 @@ uint32_t rotateLeft(uint32_t x, int n) {
 block encRound(key32 k, block inp) {
     block ret = { inp.y ^ (rotateLeft(inp.x,1) & rotateLeft(inp.x,8)) ^ rotateLeft(inp.x,2) ^ k, inp.x };
     return ret;
-}
-
-void rotateLeft(Ctxt &x, int n) {
-    Ctxt other = x;
-    global_ea->shift(other, n);
-    global_ea->shift(x, -(32 - n));
-    x += other;
-    x *= *global_maxintCT; // mask to keep leftmost (nslots-32) bits zeroed out.
-}
-
-vector<Ctxt> encRoundH(Ctxt k, vector<Ctxt> *b, int xIndex, int yIndex) {
-    Ctxt x = (*b)[xIndex];
-    Ctxt y = (*b)[yIndex];
 }
 
 block decRound(key32 k, block inp) {
@@ -77,10 +71,14 @@ key expandKey(key inp){
         key32 tmp;
         tmp = rotateLeft(ks[i-1], 3) ^ ks[i-3];
         tmp ^= rotateLeft(tmp, 1);
-        ks[i] = ~ks[i-m] ^ tmp ^ z[j][i-m % 62] ^ 3;
+        tmp ^= 3;
+        tmp ^= z[j][i-m % 62];
+        tmp ^= ~ks[i-m];
+        ks.push_back(tmp);
     }
     return ks;
 }
+
 
 block encrypt(key k, block inp) {
     block res = inp;
@@ -100,6 +98,75 @@ block decrypt(key k, block inp) {
     }
     return res;
 }
+
+// Homomorphic SIMON
+
+void rotateLeft(Ctxt &x, int n) {
+    Ctxt other = x;
+    global_ea->shift(other, n);
+    global_ea->shift(x, -(32 - n));
+    x += other;
+    x *= *global_maxint; // mask to keep leftmost (nslots-32) bits zeroed out.
+}
+
+void encRound(Ctxt key, Ctxt &x, Ctxt &y) {
+    Ctxt tmp = x;
+    Ctxt x0 = x; 
+    Ctxt x1 = x; 
+    Ctxt x2 = x; 
+    rotateLeft(x0, 1);
+    rotateLeft(x1, 8);
+    rotateLeft(x2, 2);
+    y += x0;
+    y += x1;
+    y += x2;
+    y += key;
+    x = y;
+    y = tmp;
+}
+
+void negate32(Ctxt &x) {
+    x += *global_maxint;
+    x *= *global_maxint;
+}
+
+Ctxt heEncrypt(uint32_t);
+
+void expandKey(vector<Ctxt> &ks) {
+    cout << "PROTO: running expandKey...";
+    static Ctxt three = heEncrypt(3);
+    for (int i = m; i < T-1; i++) {
+        cout << " " << i+1 << "/" << T-1;
+        Ctxt tmp = ks[i-1];
+        rotateLeft(tmp, 3);
+        tmp += ks[i-3];
+        Ctxt tmp2 = tmp;
+        rotateLeft(tmp2, 1);
+        tmp += tmp2;
+        tmp += three;
+        Ctxt theZ(*global_pubkey);
+        if (z[j][i-m % 62])
+            theZ = *global_one;
+        else
+            theZ = *global_zero;
+        tmp += theZ;
+        Ctxt iminusm = ks[i-m];
+        negate32(iminusm);
+        tmp += iminusm;
+        ks.push_back(tmp);
+    }
+    cout << endl;
+}
+
+void encrypt(vector<Ctxt> k, Ctxt x, Ctxt y) {
+    expandKey(k);
+    for (int i = 0; i < T-1; i++) {
+        cout << "PROTO: running encRound " << i+1 << "/" << k.size() << "..." << endl;
+        encRound(k[i], x, y);
+    }
+}
+
+// HELPERS
 
 key genKey() {
     srand(time(NULL));
@@ -259,7 +326,7 @@ void printKey(key k) {
     cout << endl;
 }
 
-vector<block> vectorsToBlocks (vector<vector<long>> inp) { 
+vector<block> vectorsToBlocks(vector<vector<long>> inp) { 
     vector<block> res;
     for (int i = 0; i < inp.size(); i+=2) {
         block b = { uint32FromBits(inp[i]), uint32FromBits(inp[i+1]) };
@@ -268,12 +335,28 @@ vector<block> vectorsToBlocks (vector<vector<long>> inp) {
     return res;
 }
 
-void performSimon(vector<Ctxt> key, Ctxt x, Ctxt y) {
+string blocksToStr(vector<block> bs) {
+    vector<string> vec;
+    stringstream ss;
+    for (int i = 0; i < bs.size(); i++) {
+        ss << std::hex << std::uppercase << bs[i].x << bs[i].y;
+    }
+    return ss.str();
+}
+
+// lifts a uint32_t into the HE monad
+Ctxt heEncrypt(uint32_t x) {
+    vector<long> vec;
+    addUint32Bits(x, &vec);
+    pad(&vec, global_ea->size());
+    Ctxt c(*global_pubkey);
+    global_ea->encrypt(c, c.getPubKey(), vec);
+    return c;
 }
 
 int main(int argc, char **argv)
 {
-    string inp = "hello world, what is up in the neighborhood yo?";
+    string inp = "cats";
     cout << "inp = \"" << inp << "\"" << endl;
     key k = genKey();
     printKey(k);
@@ -299,38 +382,20 @@ int main(int argc, char **argv)
     addSome1DMatrices(secretKey);
 
     EncryptedArray ea(context, G);
-    global_ea = &ea;
     long nslots = ea.size();
+
+    // set up globals
     global_nslots = &nslots;
+    global_ea     = &ea;
+    global_pubkey = &publicKey;
 
-    // set up global maxint for masks
-    vector<long> maxintVec, maxintTest;
-    addUint32Bits(0xFFFFFFFF, &maxintVec);
-    pad(&maxintVec, nslots);
-    Ctxt maxintCT(publicKey);
-    ea.encrypt(maxintCT, publicKey, maxintVec);
-    global_maxintCT = &maxintCT;
-
-    // test rotation : FIXME
-    cout << "Running test.." << endl;
-    vector<long> testBits, result;
-
-    uint32_t x = rand32();
-    int n = rand() % 32;
-
-    addUint32Bits(x, &testBits);
-    pad(&testBits, nslots);
-    Ctxt testCT(publicKey);
-    ea.encrypt(testCT, publicKey, testBits);
-
-    rotateLeft(testCT, n);
-
-    ea.decrypt(testCT, secretKey, result);
-    cout << "rotateLeft(" << x << ", " << n << ")" << endl;
-    cout << "HE = " << uint32FromBits(result) << endl;
-    cout << "PT = " << rotateLeft(x,n) << endl;
-
-    return 0;
+    // heEncrypt uses globals
+    Ctxt maxint   = heEncrypt(0xFFFFFFFF);
+    Ctxt zero     = heEncrypt(0);
+    Ctxt one      = heEncrypt(1);
+    global_maxint = &maxint;
+    global_zero   = &zero;
+    global_one    = &one;
 
     // HEencrypt key
     cout << "Encrypting key..." << endl;
@@ -357,7 +422,7 @@ int main(int argc, char **argv)
     // encryptedKey contains HEenc(vectorized(k))
 
     for (int i = 0; i < cts.size(); i+=2) {
-        performSimon(encryptedKey, cts[i], cts[i+1]);
+        encrypt(encryptedKey, cts[i], cts[i+1]);
     }
 
     // now cts contains HEenc(simonEnc(k, inp))
@@ -368,8 +433,13 @@ int main(int argc, char **argv)
     }
 
     // pt = vectorized(simonEnc(inp)), now check that it equals what it should.
+    
+    //TODO: Test encRound
 
-    cout << "result = " << simonDec(vectorsToBlocks(pt), k);
+    cout << "he enc(inp) = " << blocksToStr(vectorsToBlocks(pt)) << endl;
+    cout << "he result   = " << simonDec(vectorsToBlocks(pt), k) << endl;
+    cout << "pt enc(inp) = " << blocksToStr(simonEnc(inp, k)) << endl;
+    cout << "pt result   = " << simonDec(simonEnc(inp, k), k) << endl;
 
     return 0;
 }

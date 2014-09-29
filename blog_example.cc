@@ -35,7 +35,6 @@ int main(int argc, char **argv)
   cout << "generated key" << endl;
 
   Ctxt ctxtTest(publicKey);
-  cout << (ctxtTest.isFake() ? "FAKE CIPHERTEXTS" : "REAL CIPHERTEXTS") << endl;
 
   EncryptedArray ea(context, G);
   PlaintextArray pa(ea);
