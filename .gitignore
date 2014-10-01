@@ -5,4 +5,5 @@ ntl-6.2.1/*
 HElib/*
 aes
 simon
+simon-naive
 example

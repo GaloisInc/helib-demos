@@ -3,7 +3,10 @@ CC=g++
 CFLAGS=-std=c++11 -I$(HELIB)/src -g
 LFLAGS=-L/usr/local/lib -L/usr/local/include/NTL -lntl 
 
-all: aes example simon
+all: aes example simon simon-naive
+
+simon-naive: simon-naive.cc
+	$(CC) $(CFLAGS) simon-naive.cc $(HELIB)/src/fhe.a -o simon-naive $(LFLAGS)
 
 simon: simon.cc
 	$(CC) $(CFLAGS) simon.cc $(HELIB)/src/fhe.a -o simon $(LFLAGS)

@@ -461,6 +461,10 @@ int main(int argc, char **argv)
     ea.decrypt(heb.y, secretKey, res[1]);
     cout << vectorTo32(res[0]) << " " << vectorTo32(res[1]) << endl;
     cout << vectorsToStr(res) << endl;
+    cout << "res[0] = ";
+    printVector(res[0]);
+    cout << "res[1] = ";
+    printVector(res[1]);
 
     vector<block> bs0 = strToBlocks(inp);
     block b = bs0[0];
