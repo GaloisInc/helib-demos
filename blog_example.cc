@@ -1,7 +1,5 @@
 // this is the example from Tom's blog
 
-#define PLAINTEXT
-
 #include "FHE.h"
 // #include "FHEContext.h"
 #include "EncryptedArray.h"
@@ -56,19 +54,10 @@ int main(int argc, char **argv) {
     ea.encrypt(ct2, publicKey, v2);
 
 
-    // how many shifts can I do without noise?
+    // how many multiplications can I do without noise?
     for (int i = 0; i < 100; i++) {
         cout << "mul#" << i << endl;
-        ct1 += ct2;
-        ct1 += ct2;
-        ct1 += ct2;
-        ct1 *= ct2; 
-        ea.shift(ct1, 1);
-        ea.shift(ct1, 8);
-        ea.shift(ct1, 2);
-        ea.shift(ct1, 1);
-        ea.shift(ct1, 8);
-        ea.shift(ct1, 2);
+        ct1 *= ct1; 
         vector<long> res;
         ea.decrypt(ct1, secretKey, res);
         for (int i = 0; i < res.size(); i ++) {
