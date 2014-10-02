@@ -25,88 +25,30 @@ bitset<62> z[5] = { z0, z1, z2, z3, z4 };
 
 const int m = 4;
 const int j = 3;
-const int T = 44; // SIMON specifications call for 44 rounds
+//const int T = 44; // SIMON specifications call for 44 rounds
+const int T = 4;
 //const int T = 1;
 
-typedef uint32_t key32;
-typedef vector<key32> key;
+// Plaintext SIMON/*{{{*/
+typedef uint32_t pt_key32;
 
-struct block {
+struct pt_block {
     uint32_t x;
     uint32_t y;
 };
 
-class ctvec;
-
-long   global_nslots;
-ctvec* global_maxint;
-ctvec* global_one;
-ctvec* global_zero;
-
-Ctxt heEncrypt(EncryptedArray&, const FHEPubKey&, uint32_t);
-
-class ctvec {
-    vector<Ctxt> vec;
-public:
-    ctvec (EncryptedArray &ea, const FHEPubKey &pubkey, vector<long> inp) {
-        for (int i = 0; i < 32; i++) {
-            Ctxt c = heEncrypt(ea, pubkey, inp[i]);
-            vec.push_back(c);
-        }
-    }
-    Ctxt get (int i) {
-        return vec[i];
-    }
-    void xorWith (ctvec &other) {
-        for (int i = 0; i < vec.size(); i++) {
-            vec[i] += other.get(i);
-        }
-    }
-    void andWith (ctvec &other) {
-        for (int i = 0; i < vec.size(); i++) {
-            vec[i] *= other.get(i);
-        }
-    }
-    void rotateLeft (int n) {
-        rotate(vec.begin(), vec.end()-n, vec.end());
-    }
-    vector<long> decrypt (EncryptedArray &ea, const FHESecKey &seckey) {
-        vector<long> res;
-        for (int i = 0; i < vec.size(); i++) {
-            vector<long> bits (global_nslots);
-            ea.decrypt(vec[i], seckey, bits);
-            res.push_back(bits[0]);
-        }
-        return res;
-    }
-};
-
-struct heblock {
-    ctvec x;
-    ctvec y;
-};
-
-uint32_t rotateLeft(uint32_t x, int n) {
+uint32_t pt_rotateLeft(uint32_t x, int n) {
     return x << n | x >> 32 - n;
 }
 
-void rotateLeft(vector<Ctxt> &x, int n) {
-    std::rotate(x.begin(), x.begin() + n, x.end());
-}
-
-block decRound(key32 k, block inp) {
-    block ret = { inp.y, inp.x ^ (rotateLeft(inp.y,1) & rotateLeft(inp.y,8)) ^ rotateLeft(inp.y,2) ^ k };
-    return ret;
-}
-
-void expandKey(key &inp){
+void pt_expandKey(vector<pt_key32> &inp){
     inp.reserve(T);
     if (inp.size() != 4)
         throw std::invalid_argument( "Key must be of length 4" );
     for (int i = m; i < T; i++) {
-        key32 tmp;
-        tmp = rotateLeft(inp[i-1], 3) ^ inp[i-3];
-        tmp ^= rotateLeft(tmp, 1);
+        pt_key32 tmp;
+        tmp  = pt_rotateLeft(inp[i-1], 3) ^ inp[i-3];
+        tmp ^= pt_rotateLeft(tmp, 1);
         tmp ^= 3;
         tmp ^= z[j][i-m % 62];
         tmp ^= ~inp[i-m];
@@ -114,16 +56,176 @@ void expandKey(key &inp){
     }
 }
 
-block encRound(key32 k, block inp) {
-    uint32_t y = inp.y;
+pt_block pt_encRound(pt_key32 k, pt_block inp) {
     uint32_t x = inp.x;
-    y ^= rotateLeft(x,1) & rotateLeft(x,8);
-    y ^= rotateLeft(x,2);
+    uint32_t y = inp.y;
+    y ^= pt_rotateLeft(x,1) & pt_rotateLeft(x,8);
+    y ^= pt_rotateLeft(x,2);
     y ^= k;
-    return {y,x};
+    return { y, x };
 }
 
-void encRound(ctvec key, heblock &inp) {
+pt_block pt_decRound(pt_key32 k, pt_block inp) {
+    uint32_t x = inp.x;
+    uint32_t y = inp.y;
+    x ^= pt_rotateLeft(y,1) & pt_rotateLeft(y,8);
+    x ^= pt_rotateLeft(y,2) ^ k;
+    return { y, x };
+}
+
+pt_block pt_encBlock(vector<pt_key32> k, pt_block inp, int nrounds = T) {
+    pt_block res = inp;
+    for (int i = 0; i < nrounds; i++) {
+        res = pt_encRound(k[i], res);
+    }
+    return res;
+}
+
+vector<pt_key32> pt_genKey() {
+    srand(time(NULL));
+    vector<pt_key32> ks;
+    for (int i = 0; i < 4; i++) {
+        ks.push_back(rand());
+    }
+    return ks;
+}
+
+vector<pt_block> strToBlocks (string inp) {
+    vector<pt_block> blocks;
+    for (int i = 0; i < inp.size(); i += 8) {
+        uint32_t x = inp[i]   << 24 | inp[i+1] << 16 | inp[i+2] << 8 | inp[i+3];
+        uint32_t y = inp[i+4] << 24 | inp[i+5] << 16 | inp[i+6] << 8 | inp[i+7];
+        pt_block b = { x, y };
+        blocks.push_back(b);
+    }
+    return blocks;
+}
+
+vector<pt_block> pt_simonEnc (vector<pt_key32> k, string inp, int nrounds = T) {
+    vector<pt_block> blocks = strToBlocks(inp);
+    for (int i = 0; i < blocks.size(); i++) {
+        pt_block b = blocks[i];
+        blocks[i] = pt_encBlock(k, b, nrounds);
+    }
+    return blocks;
+}
+
+string blocksToStr (vector<pt_block> bs) {
+    string ret;
+    for (int i = 0; i < bs.size(); i++) {
+        pt_block b = bs[i];
+        ret.push_back(b.x >> 24);
+        ret.push_back(b.x >> 16 & 255);
+        ret.push_back(b.x >> 8  & 255);
+        ret.push_back(b.x & 255);
+        ret.push_back(b.y >> 24);
+        ret.push_back(b.y >> 16 & 255);
+        ret.push_back(b.y >> 8  & 255);
+        ret.push_back(b.y & 255);
+    }
+    return ret;
+}
+
+pt_block pt_decBlock(vector<pt_key32> k, pt_block inp, int nrounds = T) {
+    pt_block res = inp;
+    for (int i = nrounds-1; i >= 0; i--) {
+        res = pt_decRound(k[i], res);
+    }
+    return res;
+}
+
+string pt_simonDec(vector<pt_key32> k, vector<pt_block> c, int nrounds = T) {
+    vector<pt_block> bs;
+    for (int i = 0; i < c.size(); i++) {
+        pt_block b = pt_decBlock(k, c[i], nrounds);
+        bs.push_back(b);
+    }
+    return blocksToStr(bs);
+}/*}}}*/
+
+////////////////////////////////////////////////////////////////////////////////
+
+class ctvec;/*{{{*/
+
+long   global_nslots;
+ctvec* global_maxint;
+ctvec* global_one;
+ctvec* global_zero;
+
+class ctvec {
+    vector<Ctxt> cts;
+    EncryptedArray* ea;
+    const FHEPubKey* pubkey;
+
+    void pad (long x, vector<long> &inp) {
+        inp.reserve(global_nslots);
+        for (int i = inp.size(); i < global_nslots; i++) inp.push_back(x);
+    }
+
+    void addUint32Bits(uint32_t n, vector<long> *v) {
+        for (int i = 0; i < 32; i++) v->push_back((n & (1 << i)) >> i);
+    }
+
+public:
+
+    ctvec (EncryptedArray &inp_ea, const FHEPubKey &inp_pubkey, vector<vector<long>> inp, bool fill=false) {
+        for (int i = 0; i < inp.size(); i++) {
+            ea = &inp_ea;
+            pubkey = &inp_pubkey;
+            if (fill) {
+                pad(inp[i][0]&1, inp[i]);
+            } else {
+                pad(0, inp[i]);
+            }
+            Ctxt c(*pubkey);
+            ea->encrypt(c, *pubkey, inp[i]);
+            cts.push_back(c);
+        }
+    }
+
+    Ctxt get (int i) {
+        return cts[i];
+    }
+
+    void xorWith (ctvec &other) {
+        for (int i = 0; i < cts.size(); i++) {
+            cts[i] += other.get(i);
+        }
+    }
+
+    void andWith (ctvec &other) {
+        for (int i = 0; i < cts.size(); i++) {
+            cts[i] *= other.get(i);
+        }
+    }
+
+    void rotateLeft (int n) {
+        rotate(cts.begin(), cts.end()-n, cts.end());
+    }
+
+    vector<vector<long>> decrypt (const FHESecKey &seckey) {
+        vector<vector<long>> res;
+        for (int i = 0; i < cts.size(); i++) {
+            vector<long> bits (global_nslots);
+            ea->decrypt(cts[i], seckey, bits);
+            res.push_back(bits);
+        }
+        return res;
+    }
+};
+/*}}}*/
+struct heblock {/*{{{*/
+    ctvec x;
+    ctvec y;
+};
+
+struct preblock {
+    vector<vector<long>> xs;
+    vector<vector<long>> ys;
+};
+
+/*}}}*/
+void encRound(ctvec key, heblock &inp) {/*{{{*/
     ctvec tmp = inp.x;
     ctvec x0 = inp.x;
     ctvec x1 = inp.x;
@@ -139,142 +241,48 @@ void encRound(ctvec key, heblock &inp) {
     inp.x = y;
     inp.y = tmp;
 }
-
-block decrypt(key k, block inp) {
-    block res = inp;
-    std::reverse(k.begin(), k.end());
-    for (int i = 0; i < k.size(); i++) {
-        res = decRound(k[i], res);
-    }
-    return res;
-}
-
-
-block encrypt(key k, block inp) {
-    block res;
-    for (int i = 0; i < T-1; i++) {
-       res = encRound(k[i], res);
-    }
-    return res;
-}
-
-key genKey() {
-    srand(time(NULL));
-    key ks;
-    for (int i = 0; i < 4; i++) {
-        ks.push_back(rand());
-    }
-    return ks;
-}
-
-uint32_t rand32() {
-    srand(time(NULL));
-    uint32_t x = 0;
-    for (int i = 0; i < 32; i++) {
-        x |= rand()%2 << i;
-    }
-    return x;
-}
-
-vector<block> strToBlocks (string inp) {
-    vector<block> blocks;
-    for (int i = 0; i < inp.size(); i += 8) {
-        uint32_t x = inp[i]   << 24 | inp[i+1] << 16 | inp[i+2] << 8 | inp[i+3];
-        uint32_t y = inp[i+4] << 24 | inp[i+5] << 16 | inp[i+6] << 8 | inp[i+7];
-        block b = { x, y };
-        blocks.push_back(b);
-    }
-    return blocks;
-}
-
-vector<block> simonEnc (string inp, key k) {
-    vector<block> blocks = strToBlocks(inp);
-    for (int i = 0; i < blocks.size(); i++) {
-        block b = blocks[i];
-        blocks[i] = encrypt(k,b);
-    }
-    return blocks;
-}
-
-string blocksToStr (vector<block> bs) {
-    string ret;
-    for (int i = 0; i < bs.size(); i++) {
-        block b = bs[i];
-        ret.push_back(b.x >> 24);
-        ret.push_back(b.x >> 16 & 255);
-        ret.push_back(b.x >> 8  & 255);
-        ret.push_back(b.x & 255);
-        ret.push_back(b.y >> 24);
-        ret.push_back(b.y >> 16 & 255);
-        ret.push_back(b.y >> 8  & 255);
-        ret.push_back(b.y & 255);
-    }
-    return ret;
-}
-
-string simonDec(vector<block> c, key k) {
-    vector<block> bs;
-    for (int i = 0; i < c.size(); i++) {
-        block b = decrypt(k, c[i]);
-        bs.push_back(b);
-    }
-    return blocksToStr(bs);
-}
-
-void addCharBits(char c, vector<long> *v) {
+/*}}}*/
+void addCharBits(char c, vector<long> *v) {/*{{{*/
     for (int i = 0; i < 8; i++) {
         v->push_back((c & (1 << i)) >> i);
     }
 }
-
-vector<long> charToBits (char c) {
+/*}}}*/
+vector<long> charToBits (char c) {/*{{{*/
     vector<long> ret;
     for (int i = 0; i < 8; i++) {
         ret.push_back((c & (1 << i)) >> i);
     }
     return ret;
 }
-
-void addUint32Bits(uint32_t n, vector<long> *v) {
-    for (int i = 0; i < 32; i++) {
-        v->push_back((n & (1 << i)) >> i);
-    }
-}
-
-vector<long> uint32ToBits (uint32_t n) {
+/*}}}*/
+vector<long> uint32ToBits (uint32_t n) {/*{{{*/
     vector<long> ret;
     for (int i = 0; i < 32; i++) {
         ret.push_back((n & (1 << i)) >> i);
     }
     return ret;
 }
-
-char charFromBits(vector<long> inp) {
+/*}}}*/
+char charFromBits(vector<long> inp) {/*{{{*/
     char ret;
     for (int i = 0; i < 8; i++) {
         ret |= inp[i] << i;
     }
     return ret;
 }
-
-uint32_t vectorTo32 (vector<long> inp) {
+/*}}}*/
+uint32_t vectorTo32 (vector<long> inp) {/*{{{*/
     uint32_t ret = 0;
     for (int i = 0; i < inp.size(); i++) {
         ret |= inp[i] << i;
     }
     return ret;
 }
-
-void pad (vector<long> *inp, int nslots) {
-    inp->reserve(nslots);
-    for (int i = inp->size(); i < nslots; i++) {
-        inp->push_back(0);
-    }
-}
-
-// returns a vector of an even number of padded vectors with 32 bits of
-// information in them. each long is actually just 0 or 1.
-vector<vector<long>> strToVectors (string inp, int nslots) {
+/*}}}*/
+vector<vector<long>> strToVectors (string inp) {/*{{{*/
+    // returns a vector of an even number of vectors with 32 bits of
+    // information in them. each long is actually just 0 or 1.
     vector<vector<long>> ret;
     ret.reserve(inp.size()/4);
     for (int i = 0; i < inp.size(); i+=4) {
@@ -283,19 +291,17 @@ vector<vector<long>> strToVectors (string inp, int nslots) {
         addCharBits(inp[i+2], &c);
         addCharBits(inp[i+1], &c);
         addCharBits(inp[i+0], &c);
-        pad(&c, nslots);
         ret.push_back(c);
     }
     if (ret.size()%2) {
         vector<long> c;
-        pad(&c, nslots);
         ret.push_back(c);
     }
     return ret;
 }
-
-// takes a vector of vectors where each long is 0 or 1. turns it into a string.
-string vectorsToStr (vector<vector<long>> inp){
+/*}}}*/
+string vectorsToStr (vector<vector<long>> inp){/*{{{*/
+    // takes a vector of vectors where each long is 0 or 1. turns it into a string.
     string ret;
     for (int i = 0; i < inp.size(); i++) {
         vector<long> v0(&inp[i][24], &inp[i][32]);
@@ -309,115 +315,147 @@ string vectorsToStr (vector<vector<long>> inp){
     }
     return ret;
 }
-
-// turns a SIMON key (vector<uint32_t>) into a vector<vector<long>> where each
-// long is simply 0 or 1.
-vector<vector<long>> keyToVectors (vector<uint32_t> key, int nslots) {
-    vector<vector<long>> ret;
-    for (int i = 0; i < key.size(); i++) {
-        vector<long> k;
-        addUint32Bits(key[i], &k);
-        pad(&k, nslots);
-        ret.push_back(k);
-    }
-    return ret;
-}
-
-vector<uint32_t> vectorsTo32 (vector<vector<long>> inp) {
+/*}}}*/
+vector<uint32_t> vectorsTo32 (vector<vector<long>> inp) {/*{{{*/
     vector<uint32_t> ret;
     for (int i = 0; i < inp.size(); i++) {
         ret.push_back(vectorTo32(inp[i]));
     }
     return ret;
 }
-
-void printKey (key k) {
+/*}}}*/
+void printKey (vector<pt_key32> k) {/*{{{*/
     cout << "key = ";
     for (int i = 0; i < k.size(); i++) {
         printf("%X ", k[i]);
     }
     cout << endl;
 }
-
-void printVector (vector<long> inp) {
+/*}}}*/
+void printVector (vector<long> inp) {/*{{{*/
     for (int i = 0; i < inp.size(); i++) {
         if (i > 0 && i%4==0) cout << " ";
         cout << inp[i];
     }
     cout << endl;
 }
-
-vector<block> vectorsToBlocks (vector<vector<long>> inp) {
-    vector<block> res (inp.size()/2);
+/*}}}*/
+vector<pt_block> vectorsToBlocks (vector<vector<long>> inp) {/*{{{*/
+    vector<pt_block> res (inp.size()/2);
     for (int i = 0; i < inp.size(); i+=2) {
-        block b = { vectorTo32(inp[i]), vectorTo32(inp[i+1]) };
+        pt_block b = { vectorTo32(inp[i]), vectorTo32(inp[i+1]) };
         res.push_back(b);
     }
     return res;
 }
+/*}}}*/
+// TODO CHECK ME
+preblock blocksToPreblock (vector<pt_block> bs) {
+    vector<vector<long>> xs;
+    vector<vector<long>> ys;
+    for (int i = 0; i < 32; i++) {
+        vector<long> nextx;
+        vector<long> nexty;
+        for (int j = 0; j < bs.size(); j++) {
+            vector<long> x = uint32ToBits(bs[j].x);
+            vector<long> y = uint32ToBits(bs[j].y);
+            nextx.push_back(x[i]);
+            nexty.push_back(y[i]);
+        }
+        xs.push_back(nextx);
+        ys.push_back(nexty);
+    }
+    return { xs, ys };
+}
 
-string blocksToHex (vector<block> bs) {
+vector<pt_block> preblockToBlocks (preblock b) {
+    vector<pt_block> bs;
+    for (int i = 0; i < 32; i++) {
+        for (int j = 0; j < b.xs.size(); j++) {
+            vector<long> xbits;
+            vector<long> ybits;
+            xbits.push_back(b.xs[i][j]);
+            ybits.push_back(b.ys[i][j]);
+            uint32_t x = vectorTo32(xbits);
+            uint32_t y = vectorTo32(ybits);
+            bs.push_back({ x, y });
+        }
+    }
+    return bs;
+}
+
+vector<pt_block> heblockToBlocks (const FHESecKey &k, heblock ct) {/*{{{*/
+    vector<pt_block> res;
+    vector<uint32_t> xs = vectorsTo32(ct.x.decrypt(k));
+    vector<uint32_t> ys = vectorsTo32(ct.y.decrypt(k));
+    for (int i = 0; i < xs.size(); i++) {
+        res.push_back({ xs[i], ys[i] });
+    }
+    return res;
+}
+/*}}}*/
+string blocksToHex (vector<pt_block> bs) {/*{{{*/
   stringstream ss;
   for (int i = 0; i < bs.size(); i++) {
     ss << std::hex << std::uppercase << std::setw(8) << std::setfill('0') << bs[i].x << " " << bs[i].y;
   }
   return ss.str();
 }
-
-string vectorsToHex (vector<vector<long>> inp) {
+/*}}}*/
+string vectorsToHex (vector<vector<long>> inp) {/*{{{*/
     return blocksToHex(vectorsToBlocks(inp));
 }
-
-// lifts a uint32_t into the HE monad
-Ctxt heEncrypt (EncryptedArray &ea, const FHEPubKey &pubkey, uint32_t x) {
-    vector<long> vec;
-    addUint32Bits(x, &vec);
-    pad(&vec, global_nslots);
-    Ctxt c(pubkey);
-    ea.encrypt(c, pubkey, vec);
-    return c;
+/*}}}*/
+heblock heEncrypt (EncryptedArray &ea, const FHEPubKey &pubkey, string s) {/*{{{*/
+    // lifts a string into the HE monad
+    vector<pt_block> pt = strToBlocks(s);
+    preblock b = blocksToPreblock(pt);
+    ctvec c0 (ea, pubkey, b.xs);
+    ctvec c1 (ea, pubkey, b.ys);
+    return { c0, c1 };
 }
-
-// lifts a string into the HE monad
-vector<heblock> heEncrypt (EncryptedArray &ea, const FHEPubKey &pubkey, string s) {
-    vector<block> pt = strToBlocks(s);
-    vector<heblock> cts;
-    for (int i = 0; i < pt.size(); i++) {
-        ctvec c0 (ea, pubkey, uint32ToBits(pt[i].x));
-        ctvec c1 (ea, pubkey, uint32ToBits(pt[i].y));
-        cts.push_back({c0,c1});
-    }
-    return cts;
-}
-
-vector<ctvec> heEncrypt (EncryptedArray &ea, const FHEPubKey &pubkey, vector<uint32_t> &k) {
+/*}}}*/
+vector<ctvec> heEncrypt (EncryptedArray &ea, const FHEPubKey &pubkey, vector<uint32_t> &k) {/*{{{*/
     vector<ctvec> encryptedKey;
     for (int i = 0; i < k.size(); i++) {
         vector<long> bits = uint32ToBits(k[i]);
-        ctvec kct (ea, pubkey, bits);
+        ctvec kct (ea, pubkey, bits, true);
         encryptedKey.push_back(kct);
     }
     return encryptedKey;
 }
-
-vector<vector<long>> heDecrypt (EncryptedArray &ea, const FHESecKey &seckey, vector<ctvec> cts) {
-    vector<vector<long>> res (cts.size());
+/*}}}*/
+vector<vector<long>> heDecrypt (const FHESecKey &seckey, heblock ct) {/*{{{*/
+    vector<vector<long>> ;
     for (int i = 0; i < cts.size(); i++) {
-        res.push_back(cts[i].decrypt(ea, seckey));
+        res.push_back(cts[i].x.decrypt(seckey));
+        res.push_back(cts[i].y.decrypt(seckey));
     }
     return res;
 }
+/*}}}*/
+void timer(bool init = false) {/*{{{*/
+    static time_t old_time;
+    static time_t new_time;
+    if (!init) {
+        old_time = new_time;
+    }
+    new_time = std::time(NULL);
+    if (!init) {
+        cout << (new_time - old_time) << "s" << endl;
+    }
+}
+/*}}}*/
 
 int main(int argc, char **argv)
 {
     string inp = "catsrule";
-    //cout << "inp = \"" << inp << "\"" << endl;
-    key k = genKey();
-    expandKey(k);
-    //vector<block> bs = strToBlocks(inp);
+    cout << "inp = \"" << inp << "\"" << endl;
+    vector<pt_key32> k = pt_genKey();
+    pt_expandKey(k);
     printKey(k);
-    //cout << "blocks = " << bs[0].x << " " << bs[0].y << endl;
 
+    // initialize helib/*{{{*/
     long m=0, p=2, r=1;
     long L=16;
     long c=3;
@@ -439,52 +477,47 @@ int main(int argc, char **argv)
     addSome1DMatrices(seckey);
     EncryptedArray ea(context, G);
     long nslots = ea.size();
+    cout << "nslots = " << nslots << endl;
     global_nslots = nslots;
-
-    // set up globals
-    cout << "Encrypting constants..." << endl;
+    timer(true);
+/*}}}*/
+    // set up globals/*{{{*/
+    cout << "Encrypting constants..." << flush;
     ctvec one (ea, pubkey, uint32ToBits(1));
     ctvec zero (ea, pubkey, uint32ToBits(0));
     ctvec maxint (ea, pubkey, uint32ToBits(0xFFFFFFFF));
     global_maxint = &maxint;
     global_zero = &zero;
     global_one = &one;
+    timer();
+/*}}}*/
 
     // HEencrypt key
-    cout << "Encrypting SIMON key..." << endl;
+    cout << "Encrypting SIMON key..." << flush;
     vector<ctvec> encryptedKey = heEncrypt(ea, pubkey, k);
+    timer();
 
     // HEencrypt input
-    cout << "Encrypting inp..." << endl;
-    vector<heblock> cts = heEncrypt(ea, pubkey, inp);
+    cout << "Encrypting inp..." << flush;
+    heblock ct = heEncrypt(ea, pubkey, inp);
+    timer();
 
     cout << "Running protocol..." << endl;
     for (int i = 0; i < T; i++) {
-        cout << "Round " << i+1 << "/" << T << "...";
-        encRound(encryptedKey[i], cts[0]);
+        timer(true);
+        cout << "Round " << i+1 << "/" << T << "..." << flush;
+        encRound(encryptedKey[i], ct);
+        timer();
 
-        vector<long> ptx = cts[0].x.decrypt(ea, seckey);
-        vector<long> pty = cts[0].y.decrypt(ea, seckey);
-        block b = { vectorTo32(ptx), vectorTo32(pty) };
-        for (int j = i; j >= 0; j--) {
-            uint32_t key = k[j];
-            b = decRound(key, b);
-        }
-        cout << "decrypted result" << i+1 << ": \"" << blocksToStr({ b }) << "\"" << endl;
+        // check intermediate result for noise
+        vector<pt_block> bs = heblockToBlocks(seckey, ct);
+        cout << "decrypted result: \"" << pt_simonDec(k, bs, i+1) << "\"" << endl;
     }
-    vector<vector<long>> res;
-    res.push_back(cts[0].x.decrypt(ea, seckey));
-    res.push_back(cts[0].y.decrypt(ea, seckey));
-    cout << "HESimon (dec) = " << vectorTo32(res[0]) << " " << vectorTo32(res[1]) << endl;
-    //cout << vectorsToStr(res) << endl;
-
-    vector<block> bs0 = strToBlocks(inp);
-    block b = bs0[0];
-    for (int i = 0; i < T; i++) {
-        b = encRound(k[i], b);
-    }
-    cout << "PTSimon (dec) = " << b.x << " " << b.y << endl;
-    //cout << blocksToStr({ b }) << endl;
-
+    
+    timer(true);
+    cout << "Decrypting result..." << flush;
+    vector<pt_block> bs = heblockToBlocks(seckey, ct);
+    timer();
+    cout << "result: \"" << pt_simonDec(k, bs) << "\"" << endl;
     return 0;
 }
