@@ -67,7 +67,6 @@ public:
             vec[i] *= other.get(i);
         }
     }
-    // TODO: Verify that this indeed works as intended.
     void rotateLeft (int n) {
         rotate(vec.begin(), vec.end()-n, vec.end());
     }
@@ -461,7 +460,7 @@ int main(int argc, char **argv)
 
     cout << "Running protocol..." << endl;
     for (int i = 0; i < T; i++) {
-        cout << "Round " << i+1 << "/" << T << "..." << endl;
+        cout << "Round " << i+1 << "/" << T << "...";
         encRound(encryptedKey[i], cts[0]);
 
         vector<long> ptx = cts[0].x.decrypt(ea, seckey);
@@ -471,7 +470,7 @@ int main(int argc, char **argv)
             uint32_t key = k[j];
             b = decRound(key, b);
         }
-        cout << "decrypted result of round " << i << ": " << blocksToStr({ b }) << endl;
+        cout << "decrypted result" << i+1 << ": \"" << blocksToStr({ b }) << "\"" << endl;
     }
     vector<vector<long>> res;
     res.push_back(cts[0].x.decrypt(ea, seckey));
