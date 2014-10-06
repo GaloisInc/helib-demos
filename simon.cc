@@ -25,9 +25,8 @@ bitset<62> z[5] = { z0, z1, z2, z3, z4 };
 
 const int m = 4;
 const int j = 3;
-const int T = 44; // SIMON specifications call for 44 rounds
-//const int T = 4;
-//const int T = 1;
+//const int T = 44; // SIMON specifications call for 44 rounds
+const int T = 7;
 
 // Plaintext SIMON
 typedef uint32_t pt_key32;
