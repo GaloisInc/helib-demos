@@ -1,6 +1,6 @@
 HELIB=${HOME}/HElib
 NTL=${HOME}/ntl-6.2.1
-CC=g++
+CC=clang++
 CFLAGS=-std=c++11 -I$(HELIB)/src -I$(NTL)/include -g --static
 LFLAGS=-L/usr/local/lib
 

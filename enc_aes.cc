@@ -51,7 +51,7 @@ typedef uint u32;
 typedef unsigned char u8;
 
 // a roundkey is a 128-bit value
-typedef struct {
+struct roundkey {
   u8 rk[16];
   void print() {
     for (int i = 0; i < 16; i++) {
@@ -60,7 +60,7 @@ typedef struct {
     }
     printf("\n");
   }  
-} roundkey;
+};
 
 // KEY EXPANSION
 

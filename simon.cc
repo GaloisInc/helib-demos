@@ -11,22 +11,33 @@
 
 #include <math.h>
 #include <stdint.h>
-#include <bitset>
 #include <tuple>
 #include <stdexcept>
 #include <algorithm>
 
-std::bitset<62> z0(0b11111010001001010110000111001101111101000100101011000011100110);
-std::bitset<62> z1(0b10001110111110010011000010110101000111011111001001100001011010);
-std::bitset<62> z2(0b10101111011100000011010010011000101000010001111110010110110011);
-std::bitset<62> z3(0b11011011101011000110010111100000010010001010011100110100001111);
-std::bitset<62> z4(0b11010001111001101011011000100000010111000011001010010011101111);
-bitset<62> z[5] = { z0, z1, z2, z3, z4 };
+vector<vector<uint32_t>> z (
+    { { 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0,
+        0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1,
+        0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0 }, 
+    { 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0,
+        0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1,
+        0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0 }, 
+    { 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1,
+        0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1,
+        1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1 }, 
+    { 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1,
+        0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0,
+        0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1 }, 
+    { 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1,
+        1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1,
+        0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1 } } 
+    );
+
 
 const int m = 4;
 const int j = 3;
-//const int T = 44; // SIMON specifications call for 44 rounds
-const int T = 7;
+const int T = 44; // SIMON specifications call for 44 rounds
+//const int T = 7;
 
 // Plaintext SIMON
 typedef uint32_t pt_key32;
@@ -37,21 +48,19 @@ struct pt_block {
 };
 
 uint32_t pt_rotateLeft(uint32_t x, int n) {
-    return x << n | x >> 32 - n;
+    return x << n | x >> (32 - n);
 }
 
-void pt_expandKey(vector<pt_key32> &inp){
-    inp.reserve(T);
-    if (inp.size() != 4)
+void pt_expandKey(vector<pt_key32> &k){
+    if (k.size() != 4)
         throw std::invalid_argument( "Key must be of length 4" );
     for (int i = m; i < T; i++) {
         pt_key32 tmp;
-        tmp  = pt_rotateLeft(inp[i-1], 3) ^ inp[i-3];
-        tmp ^= pt_rotateLeft(tmp, 1);
-        tmp ^= 3;
-        tmp ^= z[j][i-m % 62];
-        tmp ^= ~inp[i-m];
-        inp.push_back(tmp);
+        tmp = pt_rotateLeft(k[i-1], -3);
+        tmp = tmp ^ k[i-3];
+        tmp = tmp ^ pt_rotateLeft(tmp, -1);
+        tmp = ~k[i-m] ^ tmp ^ z[j][i-m % 62] ^ 3;
+        k.push_back(tmp);
     }
 }
 
@@ -141,6 +150,9 @@ string pt_simonDec(vector<pt_key32> k, vector<pt_block> c, int nrounds = T) {
     }
     return blocksToStr(bs);
 }
+
+// Homomorphic SIMON
+
 class ctvec;
 
 long   global_nslots;
@@ -326,7 +338,8 @@ vector<uint32_t> vectorsTo32 (vector<vector<long>> inp) {
 void printKey (vector<pt_key32> k) {
     cout << "key = ";
     for (int i = 0; i < k.size(); i++) {
-        printf("%X ", k[i]);
+        if (!(i%5)) printf("\n");
+        printf("0x%08x ", k[i]);
     }
     cout << endl;
 }
@@ -414,18 +427,6 @@ vector<pt_block> heblockToBlocks (const FHESecKey &k, heblock ct) {
     return preblockToBlocks({ xs, ys });
 }
 
-//string blocksToHex (vector<pt_block> bs) {
-  //stringstream ss;
-  //for (int i = 0; i < bs.size(); i++) {
-    //ss << std::hex << std::uppercase << std::setw(8) << std::setfill('0') << bs[i].x << " " << bs[i].y;
-  //}
-  //return ss.str();
-//}
-
-//string vectorsToHex (vector<vector<long>> inp) {
-    //return blocksToHex(vectorsToBlocks(inp));
-//}
-
 heblock heEncrypt (EncryptedArray &ea, const FHEPubKey &pubkey, string s) {
     vector<pt_block> pt = strToBlocks(s);
     pt_preblock b = blocksToPreblock(pt);
@@ -445,15 +446,6 @@ vector<ctvec> heEncrypt (EncryptedArray &ea, const FHEPubKey &pubkey, vector<uin
     return encryptedKey;
 }
 
-//vector<vector<long>> heDecrypt (const FHESecKey &seckey, heblock ct) {
-    //vector<vector<long>> ;
-    //for (int i = 0; i < cts.size(); i++) {
-        //res.push_back(cts[i].x.decrypt(seckey));
-        //res.push_back(cts[i].y.decrypt(seckey));
-    //}
-    //return res;
-//}
-
 void timer(bool init = false) {
     static time_t old_time;
     static time_t new_time;
@@ -469,6 +461,11 @@ void timer(bool init = false) {
 
 int main(int argc, char **argv)
 {
+    vector<pt_key32> testkey ({ 0x1b1a1918, 0x13121110, 0x0b0a0908, 0x03020100 });
+    pt_expandKey(testkey); 
+    printKey(testkey);
+    return 0;
+
     string inp = "dude, cats rule. galois should have a cat room.";
     cout << "inp = \"" << inp << "\"" << endl;
     vector<pt_key32> k = pt_genKey();
