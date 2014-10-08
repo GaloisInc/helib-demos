@@ -1,19 +1,13 @@
-#include "FHE.h"
-#include <string>
-#include <stdio.h>
 #include <ctime>
-#include "EncryptedArray.h"
-#include "permutations.h"
-#include <NTL/lzz_pXFactoring.h>
-#include <fstream>
-#include <sstream>
-#include <sys/time.h>
-
-#include <math.h>
-#include <stdint.h>
-#include <tuple>
-#include <stdexcept>
 #include <algorithm>
+#include "FHE.h"
+#include "EncryptedArray.h"
+
+// SIMON parameters
+const int m = 4;
+const int j = 3;
+const int T = 44; // SIMON specifications call for 44 rounds
+//const int T = 7;
 
 vector<vector<uint32_t>> z (
     { { 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0,
@@ -33,11 +27,6 @@ vector<vector<uint32_t>> z (
         0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1 } } 
     );
 
-
-const int m = 4;
-const int j = 3;
-const int T = 44; // SIMON specifications call for 44 rounds
-//const int T = 7;
 
 // Plaintext SIMON
 typedef uint32_t pt_key32;
@@ -539,3 +528,4 @@ int main(int argc, char **argv)
     cout << "result: \"" << pt_simonDec(k, bs) << "\"" << endl;
     return 0;
 }
+

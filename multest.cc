@@ -1,13 +1,21 @@
 // this is the example from Tom's blog
 
+#include <ctime>
 #include "FHE.h"
 // #include "FHEContext.h"
 #include "EncryptedArray.h"
-#include <NTL/lzz_pXFactoring.h>
-#include <fstream>
-#include <sstream>
-#include <sys/time.h>
 
+void timer(bool init = false) {
+    static time_t old_time;
+    static time_t new_time;
+    if (!init) {
+        old_time = new_time;
+    }
+    new_time = std::time(NULL);
+    if (!init) {
+        cout << (new_time - old_time) << "s" << endl;
+    }
+}
 
 int main(int argc, char **argv) {
     cout << "starting ..." << endl;
@@ -48,13 +56,15 @@ int main(int argc, char **argv) {
     }
 
     // how many multiplications can we do without noise?
-    Ctxt ct1(publicKey);
-    ea.encrypt(ct1, publicKey, v1);
+    Ctxt ct(publicKey);
+    ea.encrypt(ct, publicKey, v1);
     for (int i = 0; i < 100; i++) {
-        cout << "mul#" << i << endl;
-        ct1 *= ct1; 
+        cout << "mul#" << i << "..." << flush;
+        timer(true);
+        ct *= ct;
+        timer();
         vector<long> res;
-        ea.decrypt(ct1, secretKey, res);
+        ea.decrypt(ct, secretKey, res);
         for (int i = 0; i < 16; i ++) {
             if (i > 0 && i%4==0) cout << " ";
             cout << res[i];

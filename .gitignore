@@ -4,5 +4,6 @@
 aes
 simon
 simon-naive
-example
+multest
+shifttest
 tags

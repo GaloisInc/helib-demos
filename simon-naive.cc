@@ -1,27 +1,31 @@
-#include "FHE.h"
-#include <string>
-#include <stdio.h>
 #include <ctime>
-#include "EncryptedArray.h"
-#include "permutations.h"
-#include <NTL/lzz_pXFactoring.h>
-#include <fstream>
-#include <sstream>
-#include <sys/time.h>
-
-#include <math.h>
-#include <stdint.h>
-#include <bitset>
-#include <tuple>
-#include <stdexcept>
 #include <algorithm>
+#include "FHE.h"
+#include "EncryptedArray.h"
 
-std::bitset<62> z0(0b11111010001001010110000111001101111101000100101011000011100110);
-std::bitset<62> z1(0b10001110111110010011000010110101000111011111001001100001011010);
-std::bitset<62> z2(0b10101111011100000011010010011000101000010001111110010110110011);
-std::bitset<62> z3(0b11011011101011000110010111100000010010001010011100110100001111);
-std::bitset<62> z4(0b11010001111001101011011000100000010111000011001010010011101111);
-bitset<62> z[5] = { z0, z1, z2, z3, z4 };
+// SIMON parameters
+const int m = 4;
+const int j = 3;
+//const int T = 44; // SIMON specifications call for 44 rounds
+const int T = 3;    // but two rounds seem to be the maximum without noise
+
+vector<vector<uint32_t>> z (
+    { { 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0,
+        0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1,
+        0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0 }, 
+    { 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0,
+        0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1,
+        0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0 }, 
+    { 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1,
+        0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1,
+        1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1 }, 
+    { 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1,
+        0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0,
+        0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1 }, 
+    { 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1,
+        1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1,
+        0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1 } } 
+    );
 
 typedef uint32_t key32;
 typedef vector<key32> key;
@@ -36,11 +40,6 @@ typedef struct {
     Ctxt y;
 } heBlock;
 
-const int m = 4;
-const int j = 3;
-//const int T = 44; // SIMON specifications call for 44 rounds
-const int T = 2;    // but two rounds seem to be the maximum without noise
-
 EncryptedArray* global_ea;
 Ctxt* global_maxint;
 Ctxt* global_one;
@@ -49,7 +48,7 @@ long* global_nslots;
 const FHEPubKey* global_pubkey;
 
 uint32_t rotateLeft(uint32_t x, int n) {
-    return x << n | x >> 32 - n;
+    return x << n | x >> (32 - n);
 }
 
 void rotateLeft(Ctxt &x, int n) {
@@ -334,18 +333,6 @@ vector<block> vectorsToBlocks (vector<vector<long>> inp) {
     return res;
 }
 
-string blocksToHex(vector<block> bs) {
-  stringstream ss;
-  for (int i = 0; i < bs.size(); i++) {
-    ss << std::hex << std::uppercase << std::setw(8) << std::setfill('0') << bs[i].x << " " << bs[i].y;
-  }
-  return ss.str();
-}
-
-string vectorsToHex (vector<vector<long>> inp) {
-    return blocksToHex(vectorsToBlocks(inp));
-}
-
 // lifts a uint32_t into the HE monad
 Ctxt heEncrypt(uint32_t x) {
     vector<long> vec;
@@ -391,6 +378,18 @@ vector<vector<long>> heDecrypt (vector<Ctxt> cts, FHESecKey k) {
         global_ea->decrypt(cts[i], k, res[i]);
     }
     return res;
+}
+
+void timer(bool init = false) {
+    static time_t old_time;
+    static time_t new_time;
+    if (!init) {
+        old_time = new_time;
+    }
+    new_time = std::time(NULL);
+    if (!init) {
+        cout << (new_time - old_time) << "s" << endl;
+    }
 }
 
 int main(int argc, char **argv)
@@ -449,30 +448,25 @@ int main(int argc, char **argv)
     vector<Ctxt> cts = heEncrypt(inp);
 
     // test encRound
-    int nrounds = 2;
     cout << "Running protocol..." << endl;
     heBlock heb = {cts[0], cts[1]}; 
     for (int i = 0; i < T; i++) {
-        cout << "Round " << i+1 << "/" << T << "..." << endl;
+        timer(true);
+        cout << "Round " << i+1 << "/" << T << "..." << flush;
         encRound(encryptedKey[i], heb);
-    }
-    vector<vector<long>> res (cts.size());
-    ea.decrypt(heb.x, secretKey, res[0]);
-    ea.decrypt(heb.y, secretKey, res[1]);
-    cout << vectorTo32(res[0]) << " " << vectorTo32(res[1]) << endl;
-    cout << vectorsToStr(res) << endl;
-    cout << "res[0] = ";
-    printVector(res[0]);
-    cout << "res[1] = ";
-    printVector(res[1]);
+        timer();
 
-    vector<block> bs0 = strToBlocks(inp);
-    block b = bs0[0];
-    for (int i = 0; i < T; i++) {
-        b = encRound(k[i], b);
-    }
-    cout << b.x << " " << b.y << endl;
-    cout << blocksToStr({ b }) << endl;
+        vector<vector<long>> res (2);
+        ea.decrypt(heb.x, secretKey, res[0]);
+        ea.decrypt(heb.y, secretKey, res[1]);
+        printf("result    : 0x%08x%08x\n", vectorTo32(res[0]), vectorTo32(res[1]));
 
+        vector<block> bs0 = strToBlocks(inp);
+        block b = bs0[0];
+        for (int j = 0; j <= i; j++) {
+            b = encRound(k[i], b);
+        }
+        printf("should be : 0x%08x%08x\n", b.x, b.y);
+    }
     return 0;
 }
