@@ -1,5 +1,3 @@
-// this is the example from Tom's blog
-
 #include <ctime>
 #include "FHE.h"
 // #include "FHEContext.h"
@@ -61,7 +59,14 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 100; i++) {
         cout << "shift#" << i << "..." << flush;
         timer(true);
+        Ctxt ct2 = ct;
+        ea.shift(ct2, 1);
+        ea.shift(ct2, 2);
+        ea.shift(ct2, -8);
         ea.shift(ct, 1);
+        ea.shift(ct, 2);
+        ea.shift(ct, -8);
+        ct *= ct;
         timer();
         vector<long> res;
         ea.decrypt(ct, secretKey, res);

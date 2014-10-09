@@ -2,7 +2,7 @@
 *.a
 *.out
 aes
-simon
+simon-simd
 simon-naive
 multest
 shifttest

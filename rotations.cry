@@ -1,0 +1,19 @@
+
+rotateLeft400 : ([400], [6]) -> [400]
+rotateLeft400 (x,n) = ((x << n) || (x >> (32-n))) && (zero # 0xFFFFFFFF)
+
+
+rl400True : [400] -> [6] -> Bit
+property rl400True z n = n >= 32 || (rotateLeft400 (z', n) == zero # (y <<< n))
+    where z' = z && (zero # 0xFFFFFFFF)
+          y  = drop `{400-32} z
+
+rotateLeft32 : ([32], [6]) -> [32]
+rotateLeft32 (x,n) = (x << n) || (x >> 32 - n)
+
+rl32True : [32] -> [6] -> Bit
+property rl32True z n = n >= 32 || ((rotateLeft32 (z, n)) == z <<< n)
+
+x : [400]
+x = zero # 0x12345678
+
