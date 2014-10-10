@@ -1,24 +1,26 @@
-// this is the example from Tom's blog
-
 #include <ctime>
 #include "FHE.h"
-// #include "FHEContext.h"
 #include "EncryptedArray.h"
+#include "simon-util.h"
 
-void timer(bool init = false) {
-    static time_t old_time;
-    static time_t new_time;
-    if (!init) {
-        old_time = new_time;
-    }
-    new_time = std::time(NULL);
-    if (!init) {
-        cout << (new_time - old_time) << "s" << endl;
-    }
+EncryptedArray* global_ea;
+long* global_nslots;
+
+Ctxt heEncrypt(FHEPubKey k, uint32_t x) {
+    vector<long> vec = uint32ToBits(x);
+    pad(0, vec, *global_nslots);
+    Ctxt c(k);
+    global_ea->encrypt(c, k, vec);
+    return c;
+}
+
+vector<long> heDecrypt (FHESecKey k, Ctxt c) {
+    vector<long> vec;
+    global_ea->decrypt(c, k, vec);
+    return vec;
 }
 
 int main(int argc, char **argv) {
-    cout << "starting ..." << endl;
     long m=0, p=2, r=1;
     long L=16;
     long c=3;
@@ -26,48 +28,38 @@ int main(int argc, char **argv) {
     long d=0;
     long security = 128;
     ZZX G;
-    cout << "finding m ...";
+    cout << "Finding m...";
     m = FindM(security,L,c,p,d,0,0);
     cout << m << endl;
+    cout << "Generating context..." << endl;
     FHEcontext context(m, p, r);
-    cout << "created context..." << endl;
+    cout << "Building mod-chain..." << endl;
     buildModChain(context, L, c);
-    cout << "buildModChain..." << endl;
-    FHESecKey secretKey(context);
-    const FHEPubKey& publicKey = secretKey;
+    cout << "Generating keys..." << endl;
+    FHESecKey seckey(context);
+    const FHEPubKey& pubkey = seckey;
     G = context.alMod.getFactorsOverZZ()[0];
-    secretKey.GenSecKey(w);
-    addSome1DMatrices(secretKey);
-    cout << "generated key" << endl;
+    seckey.GenSecKey(w);
+    addSome1DMatrices(seckey);
 
     EncryptedArray ea(context, G);
-    PlaintextArray pa(ea);
     long nslots = ea.size();
 
-    srand(time(NULL));
-
-    vector<long> v1;
-    for (int i = 0; i < nslots; i++) {
-        if (i == 0) {
-            v1.push_back(1);
-        } else {
-            v1.push_back(0);
-        }
-    }
+    // set up globals
+    global_nslots = &nslots;
+    global_ea     = &ea;
 
     // how many multiplications can we do without noise?
-    Ctxt ct(publicKey);
-    ea.encrypt(ct, publicKey, v1);
-    for (int i = 0; i < 100; i++) {
+    Ctxt one = heEncrypt(pubkey, 1);
+    for (int i = 1; i <= 10; i++) {
         cout << "mul#" << i << "..." << flush;
-        timer(true);
-        ct *= ct;
-        timer();
-        vector<long> res;
-        ea.decrypt(ct, secretKey, res);
-        for (int i = 0; i < 16; i ++) {
-            if (i > 0 && i%4==0) cout << " ";
-            cout << res[i];
+        ///////////
+        one *= one;
+        ///////////
+        vector<long> res = heDecrypt(seckey, one);
+        for (int j = 32; j >= 0; j--) {
+            if (j > 0 && j%4==0) cout << " ";
+            cout << res[j];
         }
         cout << endl;
     }

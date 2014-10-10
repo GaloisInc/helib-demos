@@ -7,8 +7,6 @@ long global_nslots;
 class ctvec;
 
 ctvec* global_maxint;
-ctvec* global_one;
-ctvec* global_zero;
 
 class ctvec {
     vector<Ctxt> cts;
@@ -188,18 +186,11 @@ int main(int argc, char **argv)
     EncryptedArray ea(context, G);
     long nslots = ea.size();
     cout << "nslots = " << nslots << endl;
-    global_nslots = nslots;
 
     // set up globals
-    timer(true);
-    cout << "Encrypting constants..." << flush;
-    ctvec one (ea, pubkey, transpose(uint32ToBits(1)));
-    ctvec zero (ea, pubkey, transpose(uint32ToBits(0)));
+    global_nslots = nslots;
     ctvec maxint (ea, pubkey, transpose(uint32ToBits(0xFFFFFFFF)));
     global_maxint = &maxint;
-    global_zero = &zero;
-    global_one = &one;
-    timer();
 
     // HEencrypt key
     cout << "Encrypting SIMON key..." << flush;
@@ -221,14 +212,15 @@ int main(int argc, char **argv)
         cout << "decrypting..." << flush;
         vector<pt_block> bs = heblockToBlocks(seckey, ct);
         timer();
-        cout << "result: \"" << pt_simonDec(k, bs, i+1) << "\" " << endl;
+
+        printf("block0    : 0x%08x 0x%08x\n", bs[0].x, bs[0].y);
+
+        vector<pt_block> pt_bs = pt_simonEnc(k, inp, i+1);
+        printf("should be : 0x%08x 0x%08x\n", pt_bs[0].x, pt_bs[0].y);
+
+        cout << "decrypted : \"" << pt_simonDec(k, bs, i+1) << "\" " << endl;
     }
 
-    timer(true);
-    cout << "Decrypting result..." << flush;
-    vector<pt_block> bs = heblockToBlocks(seckey, ct);
-    timer();
-    cout << "result: \"" << pt_simonDec(k, bs, T) << "\"" << endl;
     return 0;
 }
 

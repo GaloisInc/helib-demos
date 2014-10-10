@@ -17,7 +17,7 @@ struct pt_block {
 // SIMON parameters
 const int m = 4;
 const int j = 3;
-const int T = 44; // SIMON specifications call for 44 rounds
+const int T = 44;             // SIMON specifications call for 44 rounds
 
 const vector<vector<uint32_t>> z (
     { { 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0,

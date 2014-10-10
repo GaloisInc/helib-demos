@@ -1,9 +1,6 @@
+deps/*
 *.o
-*.a
-*.out
 aes
 simon-simd
 simon-naive
 multest
-shifttest
-tags
