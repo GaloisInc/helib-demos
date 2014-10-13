@@ -3,4 +3,5 @@ deps/*
 aes
 simon-simd
 simon-blocks
+simon-plaintext
 multest

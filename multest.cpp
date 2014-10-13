@@ -6,7 +6,7 @@
 EncryptedArray* global_ea;
 long* global_nslots;
 
-Ctxt heEncrypt(FHEPubKey k, uint32_t x) {
+Ctxt heEncrypt(const FHEPubKey& k, uint32_t x) {
     vector<long> vec = uint32ToBits(x);
     pad(0, vec, *global_nslots);
     Ctxt c(k);
@@ -14,7 +14,7 @@ Ctxt heEncrypt(FHEPubKey k, uint32_t x) {
     return c;
 }
 
-vector<long> heDecrypt (FHESecKey k, Ctxt c) {
+vector<long> heDecrypt (const FHESecKey& k, Ctxt c) {
     vector<long> vec;
     global_ea->decrypt(c, k, vec);
     return vec;
@@ -51,10 +51,10 @@ int main(int argc, char **argv) {
 
     // how many multiplications can we do without noise?
     Ctxt one = heEncrypt(pubkey, 1);
-    for (int i = 1; i <= 10; i++) {
+    for (int i = 1; i <= 50; i++) {
         cout << "mul#" << i << "..." << flush;
         ///////////
-        one *= one;
+        one.multiplyBy(one);
         ///////////
         vector<long> res = heDecrypt(seckey, one);
         for (int j = 32; j >= 0; j--) {

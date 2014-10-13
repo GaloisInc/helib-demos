@@ -1,0 +1,264 @@
+inp = "secrets!"
+as block : 0x73656372 0x65747321
+key = 
+0x1b1a1918 0x13121110 0x0b0a0908 0x03020100 0xfe2e9f4d 
+0x8245d97c 0xae1a11cc 0xa2e6cd33 0x8cc4e007 0x0df9edaa 
+0xc310e6f4 0xc3ecb07b 0xbc7d598d 0x3cd6f971 0x2aa241f6 
+0xf9aed6ed 0x8190140a 0x04f16440 0xd0f5395d 0xa018c3a0 
+0x66e4a9d8 0x4933e1e8 0x52ab26f3 0x550e17d9 0x4b4064be 
+0x60eea143 0x08cefb06 0x65848e15 0x9eceb382 0xe98de573 
+0x63deaf1d 0x3194a4b8 0xf9518568 
+Finding m...
+Generating context...
+Building mod-chain...
+Generating keys...
+nslots = 480
+Encrypting SIMON key...
+Encrypting inp...
+Running protocol...
+Round 1/33...51s
+decrypting...0s
+result    : 0xd7b9a590 0x73656372
+should be : 0xd7b9a590 0x73656372
+decrypted : "secrets!" 
+Round 2/33...52s
+decrypting...1s
+result    : 0x97b0e420 0xd7b9a590
+should be : 0x97b0e420 0xd7b9a590
+decrypted : "secrets!" 
+Round 3/33...51s
+decrypting...1s
+result    : 0xa2103c1b 0x97b0e420
+should be : 0xa2103c1b 0x97b0e420
+decrypted : "secrets!" 
+Round 4/33...49s
+decrypting...1s
+result    : 0x1cd20d6c 0xa2103c1b
+should be : 0x1cd20d6c 0xa2103c1b
+decrypted : "secrets!" 
+Round 5/33...48s
+decrypting...1s
+result    : 0x3f729efe 0x1cd20d6c
+should be : 0x3f729efe 0x1cd20d6c
+decrypted : "secrets!" 
+Round 6/33...48s
+decrypting...1s
+result    : 0x11d993d4 0x3f729efe
+should be : 0x11d993d4 0x3f729efe
+decrypted : "secrets!" 
+Round 7/33...47s
+decrypting...1s
+result    : 0xd79dc462 0x11d993d4
+should be : 0xd79dc462 0x11d993d4
+decrypted : "secrets!" 
+Round 8/33...46s
+decrypting...1s
+result    : 0x60484fa9 0xd79dc462
+should be : 0x60484fa9 0xd79dc462
+decrypted : "secrets!" 
+Round 9/33...47s
+decrypting...1s
+result    : 0x9a789380 0x60484fa9
+should be : 0x9a789380 0x60484fa9
+decrypted : "secrets!" 
+Round 10/33...46s
+decrypting...1s
+result    : 0x34c2ec01 0x9a789380
+should be : 0x34c2ec01 0x9a789380
+decrypted : "secrets!" 
+Round 11/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0x34c2ec01
+should be : 0xcae7c570 0x34c2ec01
+decrypted : "§e)5ok" 
+Round 12/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0x59744979 0xcae7c570
+decrypted : "._ŸSÏ×M‰" 
+Round 13/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0x2303a948 0x59744979
+decrypted : "‚¼ýNdœåÏ" 
+Round 14/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0xebad5528 0x2303a948
+decrypted : "½7G-<Q×" 
+Round 15/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0x2244945c 0xebad5528
+decrypted : "(¦‡þ—lC" 
+Round 16/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0xdf91da95 0x2244945c
+decrypted : "Ðê/Ø™màF" 
+Round 17/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0x4c917f0a 0xdf91da95
+decrypted : "ùâ&+x-" 
+Round 18/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0x780748f8 0x4c917f0a
+decrypted : "ò¬Þ©_æ" 
+Round 19/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffdf 0xffffffff
+should be : 0x7c71f5c6 0x780748f8
+decrypted : "y–¦ð}O$g" 
+Round 20/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffdf
+should be : 0x59399e4d 0x7c71f5c6
+decrypted : "Ë¢D€î- t" 
+Round 21/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0x4e612933 0x59399e4d
+decrypted : "ª]¡8Ol" 
+Round 22/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0x298ec92e 0x4e612933
+decrypted : "!mØÎàM" 
+Round 23/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+45s
+decrypting...1s
+result    : 0xffffffff 0xffffffff
+should be : 0xb8f82970 0x298ec92e
+decrypted : "û·IÑÎ9g" 
+Round 24/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffdfff 0xffffffff
+should be : 0xef402b95 0xb8f82970
+decrypted : "®lwêâ" 
+Round 25/33...Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+Ctxt::findBaseSet warning: already at lowest level
+46s
+decrypting...1s
+result    : 0xffffffff 0xffffdfff
+should be : 0x0eb8f6b2 0xef402b95
+decrypted : "ÒˆN	À4?Á" 
+Round 26/33...

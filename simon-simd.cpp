@@ -57,11 +57,12 @@ public:
         rotate(cts.begin(), cts.end()-n, cts.end());
     }
 
-    vector<vector<long>> decrypt (const FHESecKey &seckey) {
+    vector<vector<long>> decrypt (const FHESecKey& seckey) {
         vector<vector<long>> res;
         for (int i = 0; i < cts.size(); i++) {
-            vector<long> bits (global_nslots);
-            ea->decrypt(cts[i], seckey, bits);
+            vector<long> decrypted (global_nslots);
+            ea->decrypt(cts[i], seckey, decrypted);
+            vector<long> bits (decrypted.begin(), decrypted.begin() + nelems);
             res.push_back(bits);
         }
         return res;
@@ -112,7 +113,7 @@ pt_preblock blocksToPreblock (vector<pt_block> bs) {
     return { xs, ys };
 }
 
-vector<pt_block> heblockToBlocks (const FHESecKey &k, heblock ct) {
+vector<pt_block> heblockToBlocks (const FHESecKey& k, heblock ct) {
     vector<pt_block> res;
     vector<vector<long>> xs = ct.x.decrypt(k);
     vector<vector<long>> ys = ct.y.decrypt(k);

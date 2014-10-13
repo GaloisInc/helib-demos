@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <vector>
-#include <ctime>
+#include <time.h>
 #include "FHE.h"
 #include "EncryptedArray.h"
 #include "simon-plaintext.h"
