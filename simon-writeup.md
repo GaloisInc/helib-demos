@@ -1,39 +1,29 @@
-Current high level idea:
-
-    The very basics of HE - what is bootstrapping
-    AES has been implemented in HE - we wanted to try a "simpler" block cipher - how about SIMON
-    SIMONv1 could not do more than 10 rounds because CT shifts are as expensive as AND
-    The "depth" of multiplications and shifts in HElib is limited to 7-32: XOR is free in comparison 
-    We can make rotations free using SIMD
-    Even then, we can only do 32 SIMON rounds in HElib since it contains a bitwise AND each round
+All of the files quoted in this blog post are available at github for you to hack on.
 
 What is Homomorphic Encryption
-==============================
+------------------------------
 
-
-HElib
------
-
-* homomorphic encryption, not quite FHE - no bootstrapping
-* summary and links
-
-* two party concept
-* plaintext vs ciphertext computation
+Homomorphic Encryption is a variety of secure computation where a single party can compute a
+function on a secret without finding out what that secret is. Which is magical.
+[HElib](https://github.com/shaih/HElib) is an implementation of homomorphic encryption in C++. At
+present, it's computation depth is limited. It doesn't support an operation called "bootstrapping"
+that provides unlimited depth computation (HE with bootstrapping is known as "fully" homomorphic
+encryption).
 
 SIMON the algorithm
 -------------------
 
 Wishing to experiment in HElib, and knowing that AES has been accomplished before, we thought we'd
-practice on a simpler cipher.  SIMON and SPECK are two new families of lightweight block ciphers
-released by the NSA in 2013. SIMON is designed for optimal implementation in hardware, and SPECK is
-designed for optimal implementation in software.
-
-http://eprint.iacr.org/2013/404.pdf
+practice on a simpler block cipher.  SIMON and SPECK are two new families of lightweight block
+ciphers released by the [NSA](http://eprint.iacr.org/2013/404.pdf) in 2013. SIMON is designed for
+optimal implementation in hardware, and SPECK is designed for optimal implementation in software.
 
 We implemented SIMON with 64 bit block size and 128 bit key size. The specs call for 44 rounds in
 SIMON 64/128. However, as we'll show below, this cannot be accomplished using the current version of
 HElib.
 
+What follows is a definition of SIMON 64/128 in [Cryptol](http://cryptol.net/). Cryptol is a
+wonderful way to think about and verify cryptographic algorithms.
 
 >    [simon.cry]
 >
@@ -49,24 +39,16 @@ HElib.
 >        bs = [b0] # [ encRound k b | b <- bs | k <- ks ]
 >        ks = expandKey k0
 
-
-
->    [simon.cry]
->
->    property correctSimon k b = decrypt k (encrypt k b) == b
->    property uniqueExpandSimon k1 k2 = (k1 == k2) || (expandKey k1 != expandKey k2)
->    
->    testKey = [0x1b1a1918, 0x13121110, 0x0b0a0908, 0x03020100]
->    test = encrypt testKey (0x656b696c, 0x20646e75) == (0x44c8fc20, 0xb9dfa07a)
+As you can see, SIMON isn't at all complicated. It's expandKey subroutine (not pictured here) is the
+most complex part. We won't be expanding keys homomorphically, though (we'll do that in plaintext).
 
 Using HElib - encrypting stuff
 ------------------------------
 
-Ciphertexts in HElib are the class "Ctxt". Ctxts are created from vectors of longs. The number of
-slots is determined at runtime, hereby refered to as **n**. Our implementations use Ring\_2. Each
-long then represents a bit. 
-
-So, to pack a Ctxt, one provides HElib a vector<long>, representing a vector of bits.
+Ciphertexts in HElib are represented by the class "Ctxt". Ctxts are created from vectors of longs.
+The number of "slots" is determined at runtime. HElib supports operations over certain Rings. We use
+Ring\_2. Then, in our implemenation, each long represents a bit. To pack a Ctxt, we provide HElib
+with a vector<long>.
 
 If you're curious as to how one performs encryption in HElib, check out the following. Don't worry
 to much about global\_ea: it's referring to HElib's EncryptedArray object, which encapsulates higher
@@ -87,8 +69,8 @@ level operations (like encryption and decryption). It's created when we initiali
 >        return cts;
 >    }
 
-First attempt
--------------
+First attempt at SIMON
+----------------------
 
 Given that blocks in SIMON 64/128 come in chunks of 32, our first implementation converted each
 block into two vectors with 32 bits in each, then padded them with zeroes up to n.
@@ -110,8 +92,10 @@ the argument Ctxt. Like a zip. In Ring\_2 this means that addition is equivalent
 multiplication is equivalent to AND. And shifts are shifts: multiplication by powers of two. You can
 see the coolness of homomorphic encryption coming through in how HElib overloads "+=" and "\*=" for
 ciphertexts (although we recommend using Ctxt.multiplyBy() instead of "\*="). In Ring\_2, addition
-is XOR, and multiplication is AND. We can derive NOT by XORing with 1. We can derive OR by using
-DeMorgan's law on AND.
+is XOR, and multiplication is AND. 
+
+We can derive NOT for bits by XORing with 1. For 32 bit numbers, we XOR each bit with 1.
+Equivalently, we XOR the whole thing by 0xFFFFFFFF.
 
 >    [simon-blocks.cpp]
 >
@@ -119,17 +103,28 @@ DeMorgan's law on AND.
 >        x += *global_maxint; // where maxint is 0xFFFFFFFF
 >    }
 >    
->    // this algorithm for rotation is verified in Cryptol in rotation.cry
+
+In order to do a rotation, we shift the Ctxt left by n, and right by 32-n, and bitwise-OR the
+result. Note that Ctxts have more than 32 slots, but we only care about the first 32, so this was
+tricky. We can derive OR by using DeMorgan's law on AND.
+
+>    [simon-blocks.cpp]
+>
+>    // this algorithm is verified in Cryptol in rotation.cry
 >    void rotateLeft32(Ctxt &x, int n) {
 >        Ctxt other = x;
 >        global_ea->shift(x, n);
 >        global_ea->shift(other, -(32-n));
->        negate32(x);
+>        negate32(x);                          // x |= other
 >        negate32(other);
 >        x.multiplyBy(other);
 >        negate32(x);
 >    }
->    
+
+Implementing encRound is straightforward and pretty much follows from the Cryptol.
+
+>    [simon-blocks.cpp]
+>
 >    void encRound(Ctxt key, heBlock &inp) {
 >        Ctxt tmp = inp.x;
 >        Ctxt x0  = inp.x;
@@ -150,8 +145,9 @@ DeMorgan's law on AND.
 We perform key expansion **in plaintext**. If we were constructing a two party protocol, the client
 would be doing key expansion before encrypting the key and sending it to the server.
 
-Unfortunately, this representation of blocks suffers from an extreme drawback. It performs 4
-multiplications per round. The first 10 rounds perform correctly:
+Unfortunately, this implementation suffers from an extreme drawback. It performs 4 multiplications
+per round (one in encRound and one in each of the three rotations). The first 10 rounds perform
+correctly:
 
 >    [logs/simon-blocks.log]
 >
@@ -191,8 +187,7 @@ But on the 11th round, HElib explodes:
 >    decrypted : [garbage]
 
 At first, this was a strange bug to encounter. We questioned whether we had implemented homomorphic
-SIMON properly. Frankly, we had no idea how far SIMON would go before hitting the noise threshold
-where HElib can no longer decrypt properly (something having to do with lattices and noise).
+SIMON properly. Frankly, we had no idea how far SIMON would go before hitting the noise threshold.
 However, it is easy to create a test to find the maximum number of multiplications.
 
 Finding the maximum number of multiplications
