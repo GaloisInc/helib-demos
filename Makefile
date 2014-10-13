@@ -9,7 +9,10 @@ DEPS = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
 HEADS = simon-plaintext.h simon-util.h
 OBJ = simon-util.o simon-plaintext.o
 
-all: multest simon-simd simon-blocks simon-plaintext
+all: aes multest simon-simd simon-blocks simon-plaintext
+
+aes: aes.cpp $(OBJ)
+	$(CC) $(CFLAGS) aes.cpp $(DEPS) -o aes $(LFLAGS) $(OBJ)
 
 simon-plaintext: simon-plaintext-test.cpp $(OBJ)
 	$(CC) $(CFLAGS) simon-plaintext-test.cpp $(DEPS) -o simon-plaintext $(LFLAGS) $(OBJ)
