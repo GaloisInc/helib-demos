@@ -2,5 +2,5 @@ deps/*
 *.o
 aes
 simon-simd
-simon-naive
+simon-blocks
 multest
