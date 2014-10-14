@@ -189,14 +189,21 @@ But on the 11th round, HElib explodes:
 
 This occurs with L=16. Setting L=32, we were able to increase the number of rounds to 16, but the
 time for each round increases from 50 to 80 seconds. If we set L=64, it takes around 1000 seconds
-per round, which we decided was too large to consider. Then, we're stuck with a SIMON that cannot
-complete the specified 44 rounds.
+per round, which we decided was too large to consider. 
 
-We were able to complete SIMON with L=26 (TODO: verify) by encrypting a single bit per Ctxt using an
-optimization known as bit slicing.
+If you think about what gets modified each round, it's only half the block, or one Ctxt. Then, it
+takes two rounds for the entire block to get touched. We can reason about this and say that in order
+to do the full 44 rounds with an average of 2 noisy operations per round, we'll need to set L to 88.
+Which is highly impractical.
+
+Then, we're stuck with a homomorphic SIMON that cannot complete the specified 44 rounds.
 
 Bit-slicing
 -----------
+
+We were able to complete SIMON with L=22 by encrypting a single bit per Ctxt using an optimization
+known as bit slicing. It reduces the noisy operations per round to an average of 1/2 (one
+multiplication per block over two rounds).
 
 We learned about bit slicing in a paper showing off a homomorphic implementation of AES
 ([GHS2012](https://eprint.iacr.org/2012/099)). The basic idea is to pack a single bit into each
@@ -215,31 +222,7 @@ times as many rounds (which makes sense - before there were 4 multiplications pe
 1). Unfortunately, we can't get rid of that last multiplication - it's the bitwise-AND of the
 encRound function.
 
->    [logs/simon-simd-L16.log]
->
->    inp = "secrets! very secrets!"
-
-Note that inp is more than one block of ascii. Again, we run a round of SIMON, decrypt the result,
-and compare it to whtat the plaintext version of SIMON produced. We then decrypt the homomorphic
-result with plaintext SIMON.
-
->    [logs/simon-simd-L16.log]
->
->    Round 31/33...41s
->    decrypting...34s
->    block0    : 0xbe359882 0xdb1279a4
->    should be : 0xbe359882 0xdb1279a4
->    decrypted : "secrets! very secrets!"
->
->    Round 32/33...42s
->    decrypting...34s
->    block0    : 0x7d220d6e 0xbe359882
->    should be : 0x779de46f 0xbe359882
->    decrypted : [garbage]
->
->    Round 33/33...Ctxt::findBaseSet warning: already at lowest level
-
-Thats with L=16.
+Now if we set L=22, we can do all 44 rounds. See [simon-simd.cpp](simon-simd.cpp) for details.
 
 Results
 -------
@@ -250,15 +233,15 @@ The "blocks" HElib implementation runs at 49s/round with L=16, 80s/round with L=
 L=64, over a billion times slower. Furthermore L must be large (much larger than 32) in order to
 complete the 44 rounds that SIMON calls for.
 
-With L=16, the bit sliced HElib implementation runs at 61s/round. If we amortize over the number of
-Ctxt slots (480), we get 127ms/round.
+With L=22, the bit sliced HElib implementation runs at ?s/round. If we amortize over the number of
+Ctxt slots (1800), we get 4s/round.
 
 Conclusion
 ----------
 
 HElib is cool. So is bit slicing. As far as performance goes, we can play with the L parameter to
-some degree, but it comes at great cost. A bootstrap operation would clearly allow all versions to
-complete the protocol.
+some degree, but it comes at great cost. We can tune the maximum depth to the minimum necessary for
+our protocol, but a bootstrap operation would greatly extend the functionality of HElib.
 
-Thanks to Tom DuBuisson, Getty Ritter, and David Archer for their assistance and advice on this
+Many thanks to Tom DuBuisson, Getty Ritter, and David Archer for their assistance and advice on this
 project.
