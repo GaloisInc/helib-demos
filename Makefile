@@ -2,7 +2,7 @@ HELIB=HElib
 NTL=ntl-6.2.1
 CC=g++
 CFLAGS=-std=c++11 -Ideps/$(HELIB)/src -Ideps/$(NTL)/include -g --static
-LFLAGS=-L/usr/local/lib
+LFLAGS=
 
 DEPS = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
 

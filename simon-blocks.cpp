@@ -109,11 +109,13 @@ int main(int argc, char **argv)
     printKey(k);
     
     long m=0, p=2, r=1;
-    long L=16;
+    //long L=16;
+    long L=64;
     long c=3;
     long w=64;
     long d=0;
     long security = 128;
+    cout << "L=" << L << endl;
     ZZX G;
     cout << "Finding m..." << endl;
     m = FindM(security,L,c,p,d,0,0);

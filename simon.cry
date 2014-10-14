@@ -1,10 +1,11 @@
 /*
  * Copyright (c) 2013-2014 Galois, Inc.
- * Distributed under the terms of the BSD3 license (see LICENSE file)
+ * Distributed under the terms of the GPLv3 license (see LICENSE file)
  */
 
 /* Cryptol specification of the Simon 64/128 block cipher
- * Author: David Lazar
+ * Original Author: David Lazar
+ * Modified by: Brent Carmer
  */
 
 module Simon where

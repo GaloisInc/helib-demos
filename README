@@ -47,3 +47,9 @@ Supporting Files
 * simon-plaintext.cpp - plaintext version of SIMON for testing
 
 * simon-util.cpp - data transformation functions
+
+Licence
+-------
+
+This software is distributed under the terms of the GNU General Public Licence v3. See the LICENCE
+file for details.
