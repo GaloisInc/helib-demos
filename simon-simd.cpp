@@ -1,3 +1,13 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// An implementation of the SIMON block cipher in HElib. Each Ctxt gets packed
+// with a single bit, and two vectors of Ctxt represent a SIMON block. It uses
+// bit slicing to parallelize SIMON by packing the corresponding bits of blocks
+// into the same Ctxt.
+
 #include <algorithm>
 #include "simon-plaintext.h"
 #include "simon-util.h"

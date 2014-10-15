@@ -22,7 +22,7 @@ We implemented SIMON with 64 bit block size and 128 bit key size. The specs call
 SIMON 64/128. However, as we'll show below, this cannot be accomplished using the current version of
 HElib.
 
-What follows is a the encryption algorithm of SIMON 64/128 specified in
+What follows is the encryption algorithm of SIMON 64/128 implemented in
 [Cryptol](http://cryptol.net/). (Cryptol is a wonderful way to think about and verify cryptographic
 algorithms.)
 
@@ -48,7 +48,7 @@ Using HElib - encrypting stuff
 
 Ciphertexts in HElib are represented by the class "Ctxt". Ctxts are created from vectors of longs.
 The number of "slots" is determined at runtime. HElib supports operations over certain Rings. We use
-Ring\_2. Then, in our implemenation, each long represents a bit. To pack a Ctxt, we provide HElib
+Ring\_2. Then, in our implementation, each long represents a bit. To pack a Ctxt, we provide HElib
 with a vector<long>.
 
 The most tweakable parameter for us is L, specifying the number levels of key switching HElib will
@@ -79,7 +79,7 @@ First attempt at SIMON
 ----------------------
 
 Given that blocks in SIMON 64/128 come in chunks of 32, our first implementation converted each
-block into two vectors with 32 bits in each, then padded them with zeroes up to n.
+block into two vectors with 32 bits in each, then padded them with zeros up to nSlots.
 
 >    [simon-blocks.cpp]
 >

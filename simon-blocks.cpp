@@ -1,3 +1,11 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// An implementation of the SIMON block cipher in HElib. Each Ctxt gets packed
+// with 32 bits, representing half of a SIMON block.
+
 #include "simon-plaintext.h"
 #include "simon-util.h"
 

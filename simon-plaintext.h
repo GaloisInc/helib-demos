@@ -1,3 +1,11 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// This file includes functions implementing the SIMON block cipher in
+// plaintext (without using homomorphic encryption).
+
 #ifndef SIMONPT_H
 #define SIMONPT_H
 

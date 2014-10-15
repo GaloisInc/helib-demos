@@ -1,3 +1,11 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// This file homomorphically squares 1 a number of times in an attempt to
+// discover the noise limit in HElib.
+
 #include <ctime>
 #include "FHE.h"
 #include "EncryptedArray.h"

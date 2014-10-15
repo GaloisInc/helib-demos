@@ -1,3 +1,10 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// Cryptol verification that the rotation algorithm in simon-blocks.cpp is
+// correct.
 
 rotateLeft400 : ([400], [6]) -> [400]
 rotateLeft400 (x,n) = ((x << n) || (x >> (32-n))) && (zero # 0xFFFFFFFF)

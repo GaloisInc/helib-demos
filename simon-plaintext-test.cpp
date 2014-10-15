@@ -1,3 +1,10 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// A test that the plaintext implementation of SIMON is correct.
+
 #include "simon-plaintext.h"
 #include "simon-util.h"
 

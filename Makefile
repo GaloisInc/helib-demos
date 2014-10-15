@@ -1,3 +1,8 @@
+# Copyright (c) 2013-2014 Galois, Inc.
+# Distributed under the terms of the GPLv3 license (see LICENSE file)
+#
+# Author: Brent Carmer
+
 HELIB=HElib
 NTL=ntl-6.2.1
 CC=g++
