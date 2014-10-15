@@ -239,14 +239,25 @@ Now if we set L=23, we can do all 44 rounds. See [simon-simd.cpp](simon-simd.cpp
 >
 >    inp = "secrets! very secrets!"
 >    Running protocol...
->    Round 1/44...148s
->    Round 2/44...169s
+>
+>    Round 1/44...117s
+>    decrypting...50s
+>    block0    : 0xfac49765 0x73656372
+>    should be : 0xfac49765 0x73656372
+>    decrypted : "secrets! very secrets!" 
+>
 >    ...
->    Round 43/44...97s
->    Round 44/44...97s
->    decrypting...87s
->    block0    : 0x6e063402 0xb2cab069
->    should be : 0x6e063402 0xb2cab069
+>
+>    Round 43/44...72s
+>    decrypting...73s
+>    block0    : 0x8454fe28 0x0252026b
+>    should be : 0x8454fe28 0x0252026b
+>    decrypted : "secrets! very secrets!" 
+>    Round 44/44...72s
+>    
+>    decrypting...73s
+>    block0    : 0xac16cab2 0x8454fe28
+>    should be : 0xac16cab2 0x8454fe28
 >    decrypted : "secrets! very secrets!" 
 
 The total runtime was an hour and 52 minutes.
