@@ -45,7 +45,9 @@ ntl:
 		cd deps && \
 		wget http://www.shoup.net/ntl/$(NTL).tar.gz -O $(NTL).tgz && \
 		tar xzf $(NTL).tgz && \
-		rm -f $(NTL).tgz;
+		rm -f $(NTL).tgz && \
+		cd $(NTL)/include/NTL && \
+		patch < ../../../../ntl.vector.h.patch;
 	cd deps/$(NTL)/src; ./configure WIZARD=off; make
 
 clean:

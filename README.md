@@ -46,6 +46,10 @@ Supporting Files
 
 * rotations.cry - Cryptol verification that the rotateLeft implementation is correct
 
+* ntl.vector.h.patch - removes an unnecessary line in NTL that causes many warnings
+
+* makefile-helib - modified HElib makefile to use the locally built NTL
+
 Licence
 -------
 
