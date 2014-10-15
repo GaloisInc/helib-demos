@@ -147,8 +147,8 @@ Implementing encRound is straightforward and pretty much follows from the Crypto
 We perform key expansion in plaintext before running any homomorphic encryption.
 
 Unfortunately, this implementation suffers from an extreme drawback. It performs 4 multiplications
-per round (one in encRound and one in each of the three rotations). The first 10 rounds perform
-correctly:
+per round (one in encRound and one in each of the three rotations). With L=16, the first 10 rounds
+perform correctly:
 
 >    [logs/simon-blocks-L16.log]
 >
@@ -187,16 +187,27 @@ But on the 11th round, HElib explodes:
 >    should be : 0xcae7c570 0x34c2ec01
 >    decrypted : [garbage]
 
-This occurs with L=16. Setting L=32, we were able to increase the number of rounds to 16, but the
-time for each round increases from 50 to 80 seconds. If we set L=64, it takes around 1000 seconds
-per round, which we decided was too large to consider. 
+Again, AND is equivalent to multiplication in Ring\_2, which is the noisy operation causing HElib to
+bottom out. The homomorphic implementation of rotateLeft contains an AND. So we currently use four
+ANDs per round.
 
-If you think about what gets modified each round, it's only half the block, or one Ctxt. Then, it
-takes two rounds for the entire block to get touched. We can reason about this and say that in order
-to do the full 44 rounds with an average of 2 noisy operations per round, we'll need to set L to 88.
-Which is highly impractical.
+If you think about what gets bitwise-ANDed each round, it's only half the block, or one Ctxt.
+Checking out the Cryptol implementation of SIMON, we see that half the result has been affected by
+AND and rotateLeft. The other half simply gets passed along as it came in.
 
-Then, we're stuck with a homomorphic SIMON that cannot complete the specified 44 rounds.
+>    [simon.cry]
+>
+>    f x = ((x <<< 1) && (x <<< 8)) ^ (x <<< 2)
+> 
+>    encRound k (x, y) = (y ^ f x ^ k, x)
+
+We can see that it takes two rounds for the entire block to be affected by the ANDs.  With four
+ANDs per round affecting only half the ciphertexts each round, we can say that the computation depth
+increases roughly 2 levels per round.
+
+Then, in order to do the full 44 rounds, we'll need to set L to somewhere around 88 (we were able to
+get it to work with L=80).  Which is highly impractical. If we set L=80, each round takes around 1100
+seconds, meaning that it takes almost 14 hours to do the full 44 rounds.
 
 Bit-slicing
 -----------
@@ -222,19 +233,35 @@ times as many rounds (which makes sense - before there were 4 multiplications pe
 1). Unfortunately, we can't get rid of that last multiplication - it's the bitwise-AND of the
 encRound function.
 
-Now if we set L=22, we can do all 44 rounds. See [simon-simd.cpp](simon-simd.cpp) for details.
+Now if we set L=23, we can do all 44 rounds. See [simon-simd.cpp](simon-simd.cpp) for details.
+
+>    [logs/simon-simd-L23.log]
+>
+>    inp = "secrets! very secrets!"
+>    Running protocol...
+>    Round 1/44...148s
+>    Round 2/44...169s
+>    ...
+>    Round 43/44...97s
+>    Round 44/44...97s
+>    decrypting...87s
+>    block0    : 0x6e063402 0xb2cab069
+>    should be : 0x6e063402 0xb2cab069
+>    decrypted : "secrets! very secrets!" 
+
+The total runtime was an hour and 52 minutes.
 
 Results
 -------
 
 A plaintext C++ implementation of SIMON achieves speeds of 61ns/round.
 
-The "blocks" HElib implementation runs at 49s/round with L=16, 80s/round with L=32, 1000s/round with
-L=64, over a billion times slower. Furthermore L must be large (much larger than 32) in order to
-complete the 44 rounds that SIMON calls for.
+The "blocks" HElib implementation runs at 49s/round with L=16, 80s/round with L=32, 1100s/round with
+L=80, over a billion times slower. Furthermore L must be greater than 80 in order to complete the 44
+rounds that SIMON calls for.
 
-With L=22, the bit sliced HElib implementation runs at ?s/round. If we amortize over the number of
-Ctxt slots (1800), we get 4s/round.
+With L=23, the bit sliced HElib implementation runs at an average of 126s/round, and completes 44
+rounds. If we amortize over the number of Ctxt slots (1800), it takes an average of 70ms/round!
 
 Conclusion
 ----------

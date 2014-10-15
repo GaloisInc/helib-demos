@@ -110,7 +110,7 @@ int main(int argc, char **argv)
     
     long m=0, p=2, r=1;
     //long L=16;
-    long L=64;
+    long L=70;
     long c=3;
     long w=64;
     long d=0;
@@ -139,11 +139,14 @@ int main(int argc, char **argv)
     Ctxt maxint   = heEncrypt(pubkey, 0xFFFFFFFF);
     global_maxint = &maxint;
 
-    cout << "Encrypting SIMON key..." << endl;
+    cout << "Encrypting SIMON key..." << flush;
+    timer(true);
     vector<Ctxt> encryptedKey = heEncrypt(pubkey, k);
+    timer();
 
-    cout << "Encrypting inp..." << endl;
+    cout << "Encrypting inp..." << flush;
     vector<heblock> cts = heEncrypt(pubkey, inp);
+    timer();
 
     cout << "Running protocol..." << endl;
     heblock b = cts[0];

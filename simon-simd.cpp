@@ -166,8 +166,7 @@ int main(int argc, char **argv)
 
     // initialize helib
     long m=0, p=2, r=1;
-    //long L=16;
-    long L=32;
+    long L=23;
     long c=3;
     long w=64;
     long d=0;
@@ -196,6 +195,7 @@ int main(int argc, char **argv)
     global_maxint = &maxint;
 
     // HEencrypt key
+    timer(true);
     cout << "Encrypting SIMON key..." << flush;
     vector<ctvec> encryptedKey = heEncrypt(ea, pubkey, k);
     timer();
