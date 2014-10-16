@@ -1,9 +1,17 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// An implementation of the SIMON block cipher in HElib. Each Ctxt gets packed
+// with 32 bits, representing half of a SIMON block.
+
 #include "simon-plaintext.h"
 #include "simon-util.h"
 
 EncryptedArray* global_ea;
 Ctxt* global_maxint;
-long* global_nslots;
+size_t* global_nslots;
 
 struct heblock {
     Ctxt x;
@@ -60,13 +68,13 @@ vector<heblock> heEncrypt (const FHEPubKey& k, string s) {
     vector<vector<long>> pt = strToVectors(s);
     vector<Ctxt> cts;
     vector<heblock> blocks;
-    for (int i = 0; i < pt.size(); i++) {
+    for (size_t i = 0; i < pt.size(); i++) {
         pad(0, pt[i], *global_nslots);
         Ctxt c(k);
         global_ea->encrypt(c, k, pt[i]);
         cts.push_back(c);
     }
-    for (int i = 0; i < cts.size()-1; i++) {
+    for (size_t i = 0; i < cts.size()-1; i++) {
         blocks.push_back({ cts[i], cts[i+1] });
     }
     return blocks;
@@ -75,7 +83,7 @@ vector<heblock> heEncrypt (const FHEPubKey& k, string s) {
 vector<Ctxt> heEncrypt (const FHEPubKey& pubkey, vector<uint32_t> k) {
     vector<vector<long>> kbits = keyToVectors(k, *global_nslots);
     vector<Ctxt> encryptedKey;
-    for (int i = 0; i < kbits.size(); i++) {
+    for (size_t i = 0; i < kbits.size(); i++) {
         pad(0, kbits[i], *global_nslots);
         Ctxt kct(pubkey);
         global_ea->encrypt(kct, pubkey, kbits[i]);
@@ -86,7 +94,7 @@ vector<Ctxt> heEncrypt (const FHEPubKey& pubkey, vector<uint32_t> k) {
 
 vector<vector<long>> heDecrypt (const FHESecKey& k, vector<Ctxt> cts) {
     vector<vector<long>> res (cts.size());
-    for (int i = 0; i < cts.size(); i++) {
+    for (size_t i = 0; i < cts.size(); i++) {
         global_ea->decrypt(cts[i], k, res[i]);
     }
     return res;
@@ -109,11 +117,13 @@ int main(int argc, char **argv)
     printKey(k);
     
     long m=0, p=2, r=1;
-    long L=16;
+    //long L=16;
+    long L=70;
     long c=3;
     long w=64;
     long d=0;
     long security = 128;
+    cout << "L=" << L << endl;
     ZZX G;
     cout << "Finding m..." << endl;
     m = FindM(security,L,c,p,d,0,0);
@@ -128,7 +138,7 @@ int main(int argc, char **argv)
     seckey.GenSecKey(w);
     addSome1DMatrices(seckey);
     EncryptedArray ea(context, G);
-    long nslots = ea.size();
+    size_t nslots = ea.size();
     cout << "nslots = " << nslots << endl;
 
     // set up globals
@@ -137,15 +147,18 @@ int main(int argc, char **argv)
     Ctxt maxint   = heEncrypt(pubkey, 0xFFFFFFFF);
     global_maxint = &maxint;
 
-    cout << "Encrypting SIMON key..." << endl;
+    cout << "Encrypting SIMON key..." << flush;
+    timer(true);
     vector<Ctxt> encryptedKey = heEncrypt(pubkey, k);
+    timer();
 
-    cout << "Encrypting inp..." << endl;
+    cout << "Encrypting inp..." << flush;
     vector<heblock> cts = heEncrypt(pubkey, inp);
+    timer();
 
     cout << "Running protocol..." << endl;
     heblock b = cts[0];
-    for (int i = 0; i < T; i++) {
+    for (size_t i = 0; i < T; i++) {
         timer(true);
         cout << "Round " << i+1 << "/" << T << "..." << flush;
         encRound(encryptedKey[i], b);
@@ -159,7 +172,7 @@ int main(int argc, char **argv)
         printf("result    : 0x%08x 0x%08x\n", res.x, res.y);
 
         vector<pt_block> bs = strToBlocks(inp);
-        for (int j = 0; j <= i; j++) {
+        for (size_t j = 0; j <= i; j++) {
             bs[0] = pt_encRound(k[j], bs[0]);
         }
         printf("should be : 0x%08x 0x%08x\n", bs[0].x, bs[0].y);

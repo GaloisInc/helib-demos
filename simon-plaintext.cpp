@@ -1,11 +1,19 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// This file includes functions implementing the SIMON block cipher in
+// plaintext (without using homomorphic encryption).
+
 #include "simon-plaintext.h"
 
-uint32_t pt_rotateLeft(uint32_t x, int n) {
+uint32_t pt_rotateLeft(uint32_t x, size_t n) {
     return x << n | x >> (32 - n);
 }
 
-void pt_expandKey(vector<pt_key32> &k, int nrounds){
-    for (int i = k.size(); i < nrounds; i++) {
+void pt_expandKey(vector<pt_key32> &k, size_t nrounds){
+    for (size_t i = k.size(); i < nrounds; i++) {
         pt_key32 tmp;
         tmp = pt_rotateLeft(k[i-1], -3);
         tmp = tmp ^ k[i-3];
@@ -32,9 +40,9 @@ pt_block pt_decRound(pt_key32 k, pt_block inp) {
     return { y, x };
 }
 
-pt_block pt_encBlock(vector<pt_key32> k, pt_block inp, int nrounds) {
+pt_block pt_encBlock(vector<pt_key32> k, pt_block inp, size_t nrounds) {
     pt_block res = inp;
-    for (int i = 0; i < nrounds; i++) {
+    for (size_t i = 0; i < nrounds; i++) {
         res = pt_encRound(k[i], res);
     }
     return res;
@@ -43,22 +51,22 @@ pt_block pt_encBlock(vector<pt_key32> k, pt_block inp, int nrounds) {
 vector<pt_key32> pt_genKey() {
     srand(time(NULL));
     vector<pt_key32> ks;
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
         ks.push_back(rand());
     }
     return ks;
 }
 
-vector<pt_block> pt_simonEnc (vector<pt_key32> k, string inp, int nrounds) {
+vector<pt_block> pt_simonEnc (vector<pt_key32> k, string inp, size_t nrounds) {
     vector<pt_block> blocks = strToBlocks(inp);
-    for (int i = 0; i < blocks.size(); i++) {
+    for (size_t i = 0; i < blocks.size(); i++) {
         pt_block b = blocks[i];
         blocks[i] = pt_encBlock(k, b, nrounds);
     }
     return blocks;
 }
 
-pt_block pt_decBlock(vector<pt_key32> k, pt_block inp, int nrounds) {
+pt_block pt_decBlock(vector<pt_key32> k, pt_block inp, size_t nrounds) {
     pt_block res = inp;
     for (int i = nrounds-1; i >= 0; i--) {
         res = pt_decRound(k[i], res);
@@ -66,9 +74,9 @@ pt_block pt_decBlock(vector<pt_key32> k, pt_block inp, int nrounds) {
     return res;
 }
 
-string pt_simonDec(vector<pt_key32> k, vector<pt_block> c, int nrounds) {
+string pt_simonDec(vector<pt_key32> k, vector<pt_block> c, size_t nrounds) {
     vector<pt_block> bs;
-    for (int i = 0; i < c.size(); i++) {
+    for (size_t i = 0; i < c.size(); i++) {
         pt_block b = pt_decBlock(k, c[i], nrounds);
         bs.push_back(b);
     }
@@ -77,7 +85,7 @@ string pt_simonDec(vector<pt_key32> k, vector<pt_block> c, int nrounds) {
 
 string blocksToStr (vector<pt_block> bs) {
     string ret;
-    for (int i = 0; i < bs.size(); i++) {
+    for (size_t i = 0; i < bs.size(); i++) {
         pt_block b = bs[i];
         ret.push_back(b.x >> 24);
         ret.push_back(b.x >> 16 & 255);

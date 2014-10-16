@@ -1,3 +1,13 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// An implementation of the SIMON block cipher in HElib. Each Ctxt gets packed
+// with a single bit, and two vectors of Ctxt represent a SIMON block. It uses
+// bit slicing to parallelize SIMON by packing the corresponding bits of blocks
+// into the same Ctxt.
+
 #include <algorithm>
 #include "simon-plaintext.h"
 #include "simon-util.h"
@@ -27,7 +37,7 @@ public:
         ea = &inp_ea;
         pubkey = &inp_pubkey;
         nelems = inp[0].size();
-        for (int i = 0; i < inp.size(); i++) {
+        for (uint32_t i = 0; i < inp.size(); i++) {
             if (fill) {
                 pad(inp[i][0]&1, inp[i], global_nslots);
             } else {
@@ -42,13 +52,13 @@ public:
     Ctxt get (int i) { return cts[i]; }
 
     void xorWith (ctvec &other) {
-        for (int i = 0; i < cts.size(); i++) {
+        for (uint32_t i = 0; i < cts.size(); i++) {
             cts[i].addCtxt(other.get(i));
         }
     }
 
     void andWith (ctvec &other) {
-        for (int i = 0; i < cts.size(); i++) {
+        for (uint32_t i = 0; i < cts.size(); i++) {
             cts[i].multiplyBy(other.get(i));
         }
     }
@@ -59,7 +69,7 @@ public:
 
     vector<vector<long>> decrypt (const FHESecKey& seckey) {
         vector<vector<long>> res;
-        for (int i = 0; i < cts.size(); i++) {
+        for (uint32_t i = 0; i < cts.size(); i++) {
             vector<long> decrypted (global_nslots);
             ea->decrypt(cts[i], seckey, decrypted);
             vector<long> bits (decrypted.begin(), decrypted.begin() + nelems);
@@ -81,7 +91,7 @@ struct heblock {
 
 vector<pt_block> preblockToBlocks (pt_preblock b) {
     vector<pt_block> bs;
-    for (int j = 0; j < b.xs[0].size(); j++) {
+    for (size_t j = 0; j < b.xs[0].size(); j++) {
         vector<long> xbits;
         vector<long> ybits;
         for (int i = 0; i < 32; i++) {
@@ -101,7 +111,7 @@ pt_preblock blocksToPreblock (vector<pt_block> bs) {
     for (int i = 0; i < 32; i++) {
         vector<long> nextx;
         vector<long> nexty;
-        for (int j = 0; j < bs.size(); j++) {
+        for (size_t j = 0; j < bs.size(); j++) {
             vector<long> x = uint32ToBits(bs[j].x);
             vector<long> y = uint32ToBits(bs[j].y);
             nextx.push_back(x[i]);
@@ -130,7 +140,7 @@ heblock heEncrypt (EncryptedArray &ea, const FHEPubKey &pubkey, string s) {
 
 vector<ctvec> heEncrypt (EncryptedArray &ea, const FHEPubKey &pubkey, vector<uint32_t> &k) {
     vector<ctvec> encryptedKey;
-    for (int i = 0; i < k.size(); i++) {
+    for (size_t i = 0; i < k.size(); i++) {
         vector<long> bits = uint32ToBits(k[i]);
         vector<vector<long>> trans = transpose(bits);
         ctvec kct (ea, pubkey, trans, true);
@@ -166,11 +176,12 @@ int main(int argc, char **argv)
 
     // initialize helib
     long m=0, p=2, r=1;
-    long L=16;
+    long L=23;
     long c=3;
     long w=64;
     long d=0;
     long security = 128;
+    cout << "L=" << L << endl;
     ZZX G;
     cout << "Finding m..." << endl;
     m = FindM(security,L,c,p,d,0,0);
@@ -194,6 +205,7 @@ int main(int argc, char **argv)
     global_maxint = &maxint;
 
     // HEencrypt key
+    timer(true);
     cout << "Encrypting SIMON key..." << flush;
     vector<ctvec> encryptedKey = heEncrypt(ea, pubkey, k);
     timer();
@@ -204,7 +216,7 @@ int main(int argc, char **argv)
     timer();
 
     cout << "Running protocol..." << endl;
-    for (int i = 0; i < T; i++) {
+    for (size_t i = 0; i < T; i++) {
         cout << "Round " << i+1 << "/" << T << "..." << flush;
         encRound(encryptedKey[i], ct);
         timer();

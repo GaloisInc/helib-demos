@@ -1,10 +1,18 @@
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Author: Brent Carmer
+//
+// This file contains mostly data mangling functions for use in simon-blocks
+// and simon-simd.
+
 #include "simon-util.h"
 
 using namespace std;
 
 vector<pt_block> strToBlocks (string inp) {
     vector<pt_block> blocks;
-    for (int i = 0; i < inp.size(); i += 8) {
+    for (uint32_t i = 0; i < inp.size(); i += 8) {
         uint32_t x = inp[i]   << 24 | inp[i+1] << 16 | inp[i+2] << 8 | inp[i+3];
         uint32_t y = inp[i+4] << 24 | inp[i+5] << 16 | inp[i+6] << 8 | inp[i+7];
         pt_block b = { x, y };
@@ -36,7 +44,7 @@ vector<long> charToBits (char c) {
 // long is simply 0 or 1.
 vector<vector<long>> keyToVectors (vector<uint32_t> key, long nslots) {
     vector<vector<long>> ret;
-    for (int i = 0; i < key.size(); i++) {
+    for (uint32_t i = 0; i < key.size(); i++) {
         vector<long> k = uint32ToBits(key[i]);
         pad(0, k, nslots);
         ret.push_back(k);
@@ -53,7 +61,7 @@ vector<long> uint32ToBits (uint32_t n) {
 }
 
 char charFromBits(vector<long> inp) {
-    char ret;
+    char ret = '\0';
     for (int i = 0; i < 8; i++) {
         ret |= inp[i] << i;
     }
@@ -62,7 +70,7 @@ char charFromBits(vector<long> inp) {
 
 uint32_t vectorTo32 (vector<long> inp) {
     uint32_t ret = 0;
-    for (int i = 0; i < inp.size(); i++) {
+    for (uint32_t i = 0; i < inp.size(); i++) {
         ret |= inp[i] << i;
     }
     return ret;
@@ -73,7 +81,7 @@ vector<vector<long>> strToVectors (string inp) {
     // information in them. each long is actually just 0 or 1.
     vector<vector<long>> ret;
     ret.reserve(inp.size()/4);
-    for (int i = 0; i < inp.size(); i+=4) {
+    for (uint32_t i = 0; i < inp.size(); i+=4) {
         vector<long> c;
         addCharBits(inp[i+3], &c);
         addCharBits(inp[i+2], &c);
@@ -91,7 +99,7 @@ vector<vector<long>> strToVectors (string inp) {
 string vectorsToStr (vector<vector<long>> inp){
     // takes a vector of vectors where each long is 0 or 1. turns it into a string.
     string ret;
-    for (int i = 0; i < inp.size(); i++) {
+    for (uint32_t i = 0; i < inp.size(); i++) {
         vector<long> v0(&inp[i][24], &inp[i][32]);
         vector<long> v1(&inp[i][16], &inp[i][24]);
         vector<long> v2(&inp[i][ 8], &inp[i][16]);
@@ -106,7 +114,7 @@ string vectorsToStr (vector<vector<long>> inp){
 
 vector<uint32_t> vectorsTo32 (vector<vector<long>> inp) {
     vector<uint32_t> ret;
-    for (int i = 0; i < inp.size(); i++) {
+    for (uint32_t i = 0; i < inp.size(); i++) {
         ret.push_back(vectorTo32(inp[i]));
     }
     return ret;
@@ -114,7 +122,7 @@ vector<uint32_t> vectorsTo32 (vector<vector<long>> inp) {
 
 void printKey (vector<pt_key32> k) {
     cout << "key = ";
-    for (int i = 0; i < k.size(); i++) {
+    for (uint32_t i = 0; i < k.size(); i++) {
         if (!(i%5)) printf("\n");
         printf("0x%08x ", k[i]);
     }
@@ -122,7 +130,7 @@ void printKey (vector<pt_key32> k) {
 }
 
 void printVector (vector<long> inp) {
-    for (int i = 0; i < inp.size(); i++) {
+    for (uint32_t i = 0; i < inp.size(); i++) {
         if (i > 0 && i%4==0) cout << " ";
         cout << inp[i];
     }
@@ -130,7 +138,7 @@ void printVector (vector<long> inp) {
 }
 
 void printVector (vector<vector<long>> inp) {
-    for (int i = 0; i < inp.size(); i++) {
+    for (uint32_t i = 0; i < inp.size(); i++) {
         cout << "[ ";
         printVector(inp[i]);
         cout << " ]" << endl;
@@ -139,7 +147,7 @@ void printVector (vector<vector<long>> inp) {
 
 vector<pt_block> vectorsToBlocks (vector<vector<long>> inp) {
     vector<pt_block> res (inp.size()/2);
-    for (int i = 0; i < inp.size(); i+=2) {
+    for (uint32_t i = 0; i < inp.size(); i+=2) {
         pt_block b = { vectorTo32(inp[i]), vectorTo32(inp[i+1]) };
         res.push_back(b);
     }
@@ -148,9 +156,9 @@ vector<pt_block> vectorsToBlocks (vector<vector<long>> inp) {
 
 vector<vector<long>> transpose (vector<vector<long>> inp) {
     vector<vector<long>> xs;
-    for (int i = 0; i < inp[0].size(); i++) {
+    for (uint32_t i = 0; i < inp[0].size(); i++) {
         vector<long> nextx;
-        for (int j = 0; j < inp.size(); j++) {
+        for (uint32_t j = 0; j < inp.size(); j++) {
             nextx.push_back(inp[j][i]);
         }
         xs.push_back(nextx);

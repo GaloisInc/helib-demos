@@ -1,8 +1,13 @@
+# Copyright (c) 2013-2014 Galois, Inc.
+# Distributed under the terms of the GPLv3 license (see LICENSE file)
+#
+# Author: Brent Carmer
+
 HELIB=HElib
 NTL=ntl-6.2.1
-CC=clang++
-CFLAGS=-std=c++11 -Ideps/$(HELIB)/src -Ideps/$(NTL)/include -g --static
-LFLAGS=-L/usr/local/lib
+CC=g++
+CFLAGS=-std=c++11 -Ideps/$(HELIB)/src -Ideps/$(NTL)/include -g --static -Wall -O3
+LFLAGS=
 
 DEPS = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
 
@@ -43,7 +48,9 @@ ntl:
 		cd deps && \
 		wget http://www.shoup.net/ntl/$(NTL).tar.gz -O $(NTL).tgz && \
 		tar xzf $(NTL).tgz && \
-		rm -f $(NTL).tgz;
+		rm -f $(NTL).tgz && \
+		cd $(NTL)/include/NTL && \
+		patch < ../../../../ntl.vector.h.patch;
 	cd deps/$(NTL)/src; ./configure WIZARD=off; make
 
 clean:

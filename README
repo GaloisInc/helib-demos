@@ -1,4 +1,0 @@
-Simon-naive and simon-simd will be able to work up to specification when HElib
-implements bootstrapping. Until then, they are limited to one and seven rounds
-respectively.
-

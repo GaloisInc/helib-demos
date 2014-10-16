@@ -1,17 +1,11 @@
-/*
- * Copyright (c) 2013-2014 Galois, Inc.
- * Distributed under the terms of the BSD3 license (see LICENSE file)
- */
-
-/* Cryptol specification of the Simon 64/128 block cipher
- * Author: David Lazar
- */
+// Copyright (c) 2013-2014 Galois, Inc.
+// Distributed under the terms of the GPLv3 license (see LICENSE file)
+//
+// Cryptol specification of the Simon 64/128 block cipher
+// Original Author: David Lazar
+// Modified by: Brent Carmer
 
 module Simon where
-
-///////////////////////////////////////////////////////////////////////
-// round function
-///////////////////////////////////////////////////////////////////////
 
 m = 4
 j = 3
@@ -26,10 +20,6 @@ decRound k (x, y) = (y, x ^ f y ^ k)
 f : [32] -> [32]
 f x = ((x <<< 1) && (x <<< 8)) ^ (x <<< 2)
 
-///////////////////////////////////////////////////////////////////////
-// encryption / decryption
-///////////////////////////////////////////////////////////////////////
-
 encrypt : [4][32] -> ([32], [32]) -> ([32], [32])
 encrypt k0 b0 = bs ! 0
   where
@@ -42,10 +32,6 @@ decrypt k0 b0 = bs ! 0
     bs = [b0] # [ decRound k b | b <- bs | k <- reverse ks ]
     ks = expandKey k0
 
-
-///////////////////////////////////////////////////////////////////////
-// key expansion
-///////////////////////////////////////////////////////////////////////
 
 expandKey : [4][32] -> [44][32]
 expandKey k0 = k
