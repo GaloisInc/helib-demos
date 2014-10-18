@@ -36,33 +36,37 @@ unsigned char s_box[256] =/*{{{*/
 typedef uint u32;
 typedef unsigned char u8;
 
-// a roundkey is a 128-bit value
-struct roundkey {
-  u8 rk[16];
-  void print() {
+typedef vector<u8> pt_state; // [16]
+typedef pt_state pt_roundkey;
+
+void print_state(pt_state st) {
     for (int i = 0; i < 16; i++) {
-      if (i % 4 == 0) printf(" ");
-      printf("%02x", rk[i]);
+        if (i % 4 == 0) printf(" ");
+        printf("%02x", st[i]);
     }
     printf("\n");
-  }  
-};
+}  
 
-// KEY EXPANSION
+typedef vector<Ctxt>     CtxtByte;  // [8]
+typedef vector<CtxtByte> CtxtState; // [16]
 
-u8 r_con(u32 i) {
-  static u8 lookup[] = { 1, 2, 4, 8, 16, 32, 64, 128, 27,
-			 54, 108, 216, 171, 77, 154, 47 };
-  return lookup[i];
+EncryptedArray* global_ea;
+FHESecKey* global_seckey;
+
+u8 r_con (u32 i) {
+    static u8 lookup[] = { 1, 2, 4, 8, 16, 32, 64, 128, 27,
+                54, 108, 216, 171, 77, 154, 47 };
+    return lookup[i];
 }
 
-void kexp_xor(u8 left[4], u8 right[4])
+void kexp_xor (u8 left[4], u8 right[4])
 {
-  for (int i = 0; i < 4; i++)
-    left[i] ^= right[i];
+    for (int i = 0; i < 4; i++) {
+        left[i] ^= right[i];
+    }
 }
 
-void nextPolys(u8 ps[16], u32 round) {
+void next_polys(u8 ps[16], u32 round) {
   for (int i = 0; i < 4; i++)
     ps[i] ^= s_box[ps[((i + 1) % 4) + 12]];
   ps[0] ^= r_con(round);
@@ -72,29 +76,46 @@ void nextPolys(u8 ps[16], u32 round) {
   kexp_xor(&ps[12], &ps[8]);
 }
 
-void keyExpand(roundkey key, roundkey rkeys[nrounds])
+typedef u8 old_roundkey[16];
+
+void key_expand(old_roundkey key, old_roundkey rkeys[nrounds])
 {
-    roundkey tmp_key;
-    memcpy(tmp_key.rk, key.rk, 16);
-    memcpy(rkeys[0].rk, tmp_key.rk, 16);
+    old_roundkey tmp_key;
+    memcpy(tmp_key, key, 16);
+    memcpy(rkeys[0], tmp_key, 16);
     for (int i = 0; i < nrounds-1; i++) {
-        nextPolys(tmp_key.rk, i);
-        memcpy(rkeys[i+1].rk, tmp_key.rk, 16);
+        next_polys(tmp_key, i);
+        memcpy(rkeys[i+1], tmp_key, 16);
     }
 }
 
-// Actual AES
+// shoehorn old expand key functions into vector representation
+vector<pt_roundkey> key_expand (pt_roundkey key)
+{
+    old_roundkey temp;
+    for (int i = 0; i < 16; i++) {
+        temp[i] = key[i];
+    }
+    old_roundkey rkeys[nrounds];
+    key_expand(temp, rkeys);
+    vector<pt_roundkey> ret (nrounds);
+    for (int i = 0; i < nrounds; i++) {
+        pt_roundkey k (16);
+        for (int j = 0; j < 16; j++) {
+            k[j] = rkeys[i][j];
+        }
+        ret[i] = k;
+    }
+    return ret;
+}
 
-typedef vector<Ctxt> CtxtByte; // [8]
-typedef vector<CtxtByte> aes_state; // [16]
-
-CtxtByte& byte_xor(CtxtByte& lhs, const CtxtByte& rhs) {
+CtxtByte& byte_xor (CtxtByte& lhs, const CtxtByte& rhs) {
     for (int i = 0; i < 8; i++)
         lhs[i] += rhs[i];
     return lhs;
 }
 
-vector<long> pad(long firstElem, long nslots) {
+vector<long> pad (long firstElem, long nslots) {
     vector<long> ns;
     ns.push_back(firstElem);
     for (int i = 1; i < nslots; i++)
@@ -102,43 +123,42 @@ vector<long> pad(long firstElem, long nslots) {
     return ns;
 }
 
-vector< vector< vector<long> > > encode_state(u8 input[16], long nslots) {
-    vector< vector< vector<long> > > vs;
+vector<vector<long>> encode_byte (u8 inp, long nslots) {
+    vector< vector<long> > new_vec;
+    for (int j = 0; j < 8; j++)
+        new_vec.push_back(pad((inp >> j) & 1, nslots));
+    return new_vec;
+}
+
+u8 decode_byte (const vector<vector<long>>& inp) {
+    u8 elem = 0;
+    for (int i = 0; i < 8; i++) {
+        elem |= inp[i][0] << i;
+    }
+    return elem;
+}
+
+vector<vector<vector<long>>> encode_state (pt_state inp, long nslots) {
+    vector<vector<vector<long>>> vs;
     for (int i = 0; i < 16; i++) {
-        vector< vector<long> > new_vec;
-        for (int j = 0; j < 8; j++)
-            new_vec.push_back(pad((input[i] >> j) & 1, nslots));
-        vs.push_back(new_vec);
+        vs.push_back(encode_byte(inp[i], nslots));
     }
     return vs;
 }
 
-//void decode_state (u8 ret[16], const vector<vector<vector<long>>>& inp) {
-    //for (int i = 0; i < 16; i++) {
-        //u8 elem = 0;
-        //for (int j = 0; j < 8; j++) {
-            //elem |= inp[i][j][0] << j;
-        //}
-        //ret[i] = elem;
-    //}
-//}
-
-vector< vector< vector<long> > > roundkey_to_state(roundkey rk, long nslots) {
-    u8 bit128[16];
-    memcpy(bit128, &rk, 16);
-    return encode_state(bit128, nslots);
+void decode_state (u8 ret[16], const vector<vector<vector<long>>>& inp) {
+    for (int i = 0; i < 16; i++) {
+        ret[i] = decode_byte(inp[i]);
+    }
 }
 
-void add_key(aes_state key0, aes_state& input) {
+void add_key(CtxtState key0, CtxtState& input) {
     for (int i = 0; i < 16; i++)
         for (int j = 0; j < 8; j++)
             input[i][j] += key0[i][j];
 }
 
-EncryptedArray* global_ea;
-FHESecKey* secret_key;
-
-void sub_bytes(CtxtByte& b) {
+void sub_byte(CtxtByte& b) {
     static vector<NTL::ZZX> c;
     if (c.size() == 0) {
         // if c hasn't been filled in yet,
@@ -161,19 +181,19 @@ void sub_bytes(CtxtByte& b) {
         c.push_back(one);
         c.push_back(zero);
     }
-    //CtxtByte bp = b;
+    CtxtByte bp = b;
     for (int i = 0; i < 8; i++) {
-        //bp[i] += b[(i+4)%8];
-        //bp[i] += b[(i+5)%8];
-        //bp[i] += b[(i+6)%8];
-        //bp[i] += b[(i+7)%8];
-        //bp[i].addConstant(c[i]);
+        bp[i] += b[(i+4)%8];
+        bp[i] += b[(i+5)%8];
+        bp[i] += b[(i+6)%8];
+        bp[i] += b[(i+7)%8];
+        bp[i].addConstant(c[i]);
         b[i].addConstant(c[i]);
     }
-    //b = bp;
+    b = bp;
 }
 
-void shift_rows(aes_state& input) {
+void shift_rows(CtxtState& input) {/*{{{*/
     // row 2
     CtxtByte tmp = input[4];
     input[4] = input[5];
@@ -248,7 +268,7 @@ void mix_columns(CtxtByte& r0,
     byte_xor(byte_xor(byte_xor(byte_xor(r3, a2), a1), b0), a0);
 }
 
-void decrypt_aes_block(u8 result[16], const aes_state& c_pt, const FHESecKey& secretKey)
+void decrypt_aes_block(u8 result[16], const CtxtState& c_pt, const FHESecKey& secretKey)
 {
     for (int i = 0; i < 16; i++) {
         result[i] = 0;
@@ -262,63 +282,105 @@ void decrypt_aes_block(u8 result[16], const aes_state& c_pt, const FHESecKey& se
     printf("\n");
 }
 
-void first_round(const aes_state& key0, aes_state& input) {
+void first_round(const CtxtState& key0, CtxtState& input) {
     add_key(key0, input);
 }
 
-void middle_round(const aes_state& key, aes_state& input) {
+void middle_round(const CtxtState& key, CtxtState& input) {
     time_t old_time, new_time;
     u8 result[16];
     old_time = std::time(NULL);
     for (int i = 0; i < 16; i++)
-        sub_bytes(input[i]);
+        sub_byte(input[i]);
     printf("  sub bytes: ");
-    decrypt_aes_block(result, input, *secret_key);
+    decrypt_aes_block(result, input, *global_seckey);
     shift_rows(input);
     printf("  shift rows: ");
-    decrypt_aes_block(result, input, *secret_key);
+    decrypt_aes_block(result, input, *global_seckey);
     for (int i = 0; i < 4; i++)
         mix_columns(input[i], input[i+4], input[i+8], input[i+12]);
     printf("  mix columns: ");
-    decrypt_aes_block(result, input, *secret_key);
+    decrypt_aes_block(result, input, *global_seckey);
     add_key(key, input);
     printf("  add key: ");
-    decrypt_aes_block(result, input, *secret_key);
+    decrypt_aes_block(result, input, *global_seckey);
     new_time = std::time(NULL);
     cout << "  Round took " << (new_time - old_time) << "s" << endl;
 }
 
-void final_round(const aes_state& keyn, aes_state& input) {
+void final_round(const CtxtState& keyn, CtxtState& input) {
     for (int i = 0; i < 16; i++)
-        sub_bytes(input[i]);
+        sub_byte(input[i]);
     shift_rows(input);
     add_key(keyn, input);
 }
 
-void encrypt_aes_state(aes_state& st,
-                       const EncryptedArray& ea,
-                       const FHEPubKey& pk,
-                       const vector< vector< vector<long> > >& pt) {
+CtxtByte encrypt_byte( const EncryptedArray& ea, const FHEPubKey& pk, u8 inp )
+{
+    vector<vector<long>> inp_vec (encode_byte(inp, ea.size()));
+    vector<Ctxt> ct_byte;
+    for (int i = 0; i < 8; i++) {
+        Ctxt new_ctx(pk);
+        ea.encrypt(new_ctx, pk, inp_vec[i]);
+        ct_byte.push_back(new_ctx);
+    }
+    return ct_byte;
+}
+
+u8 decrypt_byte ( const EncryptedArray& ea, const FHESecKey& sk, CtxtByte inp )
+{
+    vector<vector<long>> derp_vec (8);
+    for (int i=0; i < 8; i++) {
+        ea.decrypt( inp[i], sk, derp_vec[i] );
+    }
+    return decode_byte(derp_vec);
+}
+
+CtxtState encrypt_state
+( 
+    const EncryptedArray& ea,
+    const FHEPubKey& pk,
+    pt_state st
+)
+{
+    vector<vector<vector<long>>> pt (encode_state(st,ea.size()));
+    CtxtState c_st;
     for (int i = 0; i < 16; i++) {
-    vector<Ctxt> vs;
+        vector<Ctxt> vs;
         for (int j = 0; j < 8; j++) {
             Ctxt new_ctx(pk);
             ea.encrypt(new_ctx, pk, pt[i][j]);
             vs.push_back(new_ctx);
         }
-    st.push_back(vs);
+        c_st.push_back(vs);
     }
+    return c_st;
 }
 
-void printResult (u8 result[16]) {
+vector<CtxtState> encrypt_keys 
+(
+    const EncryptedArray& ea, 
+    const FHEPubKey& pk, 
+    const vector<pt_roundkey>& rks
+) 
+{
+    vector<CtxtState> keys;
+    for (size_t i = 0; i < rks.size(); i++) {
+        CtxtState new_st (encrypt_state(ea, pk, rks[i]));
+        keys.push_back(new_st);
+    }
+    return keys;
+}
+
+void print_result (u8 result[16]) {
     for (int i = 0; i < 16; i++) {
         printf("%02x", result[i]);
     }
-}
+}/*}}}*/
 
 
 int main(int argc, char **argv) {
-    long m=0;
+    long m=0;/*{{{*/
     long p=2;
     long r=1;
     long L=16;
@@ -328,21 +390,17 @@ int main(int argc, char **argv) {
     long security=128;
     NTL::ZZX G;
 
-    u8 key_bytes[16] = {
+    pt_roundkey key ({
         0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 
         0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c
-    };
-    roundkey key;
-    memcpy(key.rk, key_bytes, 16);
-    u8 data[16] = {
+    });
+    pt_state data ({
         0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff,
         0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff
-    };
+    });
 
-    roundkey key_i[nrounds];
     cout << "Performing key expansion..." << endl;
-
-    keyExpand(key, key_i);
+    vector<pt_roundkey> roundkeys (key_expand(key));
 
     cout << "Initializing HElib values..." << endl;
     m = FindM(security,L,c,p,d,m,0);
@@ -351,7 +409,7 @@ int main(int argc, char **argv) {
     buildModChain(context, L, c);
     FHESecKey secretKey(context);
     const FHEPubKey& publicKey = secretKey;
-    secret_key = &secretKey;
+    global_seckey = &secretKey;
 
     G = context.alMod.getFactorsOverZZ()[0];
     secretKey.GenSecKey(w);
@@ -360,30 +418,33 @@ int main(int argc, char **argv) {
     EncryptedArray ea(context, G);
     global_ea = &ea;
     long nslots = ea.size();
+    cout << "nslots=" << nslots << endl;/*}}}*/
 
-    cout << nslots << endl;
+    // test SubByte
+    puts("");
+    u8 inp = 0xAB;
+    CtxtByte test (encrypt_byte(ea, publicKey, inp));
+    sub_byte(test);
+    u8 res = decrypt_byte(ea, secretKey, test);
+    printf("homomorphic SubByte(0x%02x) = 0x%02x\n", inp, res);
+    printf("plaintext     s_box[0x%02x] = 0x%02x\n", inp, s_box[inp]);
 
-    time_t old_time, new_time;
+    return 0;
+
+    time_t old_time, new_time;/*{{{*/
     old_time = std::time(NULL);
     cout << "Encrypting keys..." << endl;
 
     u8 result[16];
 
-    vector<aes_state> c_ki;
-    for (int i = 0; i < nrounds; i++) {
-        aes_state new_st;
-        encrypt_aes_state(new_st, ea, publicKey,
-                            roundkey_to_state(key_i[i], nslots));
-        c_ki.push_back(new_st);
-    }
+    vector<CtxtState> encrypted_keys (encrypt_keys(ea, publicKey, roundkeys));
 
     new_time = std::time(NULL);
     cout << "  " << (new_time - old_time) << "s" << endl;
     old_time = new_time;
     cout << "Encrypting cleartext..." << endl;
 
-    aes_state c_pt; // vector<vector<Ctxt>>
-    encrypt_aes_state(c_pt, ea, publicKey, encode_state(data, nslots));
+    CtxtState c_pt(encrypt_state(ea, publicKey, data));
     // c_pt <- data // "bit sliced"
 
     new_time = std::time(NULL);
@@ -395,17 +456,17 @@ int main(int argc, char **argv) {
     decrypt_aes_block(result, c_pt, secretKey);
 
     cout << "First round: ";
-    first_round(c_ki[0], c_pt);
+    first_round(encrypted_keys[0], c_pt);
     decrypt_aes_block(result, c_pt, secretKey);
 
     // checked to here
 
     for (int i = 1; i < nrounds-1; i++) {
-        middle_round(c_ki[i], c_pt);
+        middle_round(encrypted_keys[i], c_pt);
         decrypt_aes_block(result, c_pt, secretKey);
         if (DEBUG_MODE) goto end;
     }
-    final_round(c_ki[nrounds-1], c_pt);
+    final_round(encrypted_keys[nrounds-1], c_pt);
 
     end:
 
@@ -423,5 +484,5 @@ int main(int argc, char **argv) {
 
     cout << endl << "And that's that." << endl;
 
-    return 0;
+    return 0;/*}}}*/
 }
