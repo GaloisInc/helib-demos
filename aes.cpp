@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <sys/time.h>
+#include <algorithm>
 
 #define DEBUG_MODE 1
 
@@ -52,6 +53,9 @@ typedef vector<CtxtByte> CtxtState; // [16]
 
 EncryptedArray* global_ea;
 FHESecKey* global_seckey;
+
+// constants
+CtxtByte* global_c;
 
 u8 r_con (u32 i) {
     static u8 lookup[] = { 1, 2, 4, 8, 16, 32, 64, 128, 27,
@@ -158,39 +162,52 @@ void add_key(CtxtState key0, CtxtState& input) {
             input[i][j] += key0[i][j];
 }
 
-void sub_byte(CtxtByte& b) {
-    static vector<NTL::ZZX> c;
-    if (c.size() == 0) {
-        // if c hasn't been filled in yet,
-        // we need to generate the constant 0x1b
-        // in a way that we can use.
-        PlaintextArray zero_p(*global_ea);
-        PlaintextArray one_p(*global_ea);
-        zero_p.replicate(0);
-        one_p.replicate(1);
-        NTL::ZZX zero, one;
-        global_ea->encode(zero, zero_p);
-        global_ea->encode(one, one_p);
-        // because 0b01100011 = 0x63
-        c.push_back(one);
-        c.push_back(one);
-        c.push_back(zero);
-        c.push_back(zero);
-        c.push_back(zero);
-        c.push_back(one);
-        c.push_back(one);
-        c.push_back(zero);
-    }
+// C++ thinks the modulus of a negative number is negative, which is bad.
+int mod (int n, int m) {
+    int res = n % m;
+    if (res < 0) res *= -1;
+    return res;
+}
+
+void xform_byte(CtxtByte& b) {
+    //static vector<NTL::ZZX> c;
+    //if (c.size() == 0) {
+        //// if c hasn't been filled in yet,
+        //// we need to generate the constant 0x1b
+        //// in a way that we can use.
+        //PlaintextArray zero_p(*global_ea);
+        //PlaintextArray one_p(*global_ea);
+        //zero_p.replicate(0);
+        //one_p.replicate(1);
+        //NTL::ZZX zero, one;
+        //global_ea->encode(zero, zero_p);
+        //global_ea->encode(one, one_p);
+        //// because 0b01100011 = 0x63
+        //c.push_back(one);
+        //c.push_back(one);
+        //c.push_back(zero);
+        //c.push_back(zero);
+        //c.push_back(zero);
+        //c.push_back(one);
+        //c.push_back(one);
+        //c.push_back(zero);
+    //}
     CtxtByte bp = b;
     for (int i = 0; i < 8; i++) {
-        bp[i] += b[(i+4)%8];
-        bp[i] += b[(i+5)%8];
-        bp[i] += b[(i+6)%8];
-        bp[i] += b[(i+7)%8];
-        bp[i].addConstant(c[i]);
-        b[i].addConstant(c[i]);
+        bp[i] += b[mod(i-4,8)];
+        bp[i] += b[mod(i-5,8)];
+        bp[i] += b[mod(i-6,8)];
+        bp[i] += b[mod(i-7,8)];
+        bp[i] += (*global_c)[i];
+        //bp[i].addConstant(c[i]);
+        //b[i].addConstant(c[i]);
     }
     b = bp;
+}
+
+void sub_byte (CtxtByte& b) {
+    // TODO need to take the inverse
+    xform_byte(b);
 }
 
 void shift_rows(CtxtState& input) {/*{{{*/
@@ -380,6 +397,7 @@ void print_result (u8 result[16]) {
 
 
 int main(int argc, char **argv) {
+
     long m=0;/*{{{*/
     long p=2;
     long r=1;
@@ -418,12 +436,15 @@ int main(int argc, char **argv) {
     EncryptedArray ea(context, G);
     global_ea = &ea;
     long nslots = ea.size();
-    cout << "nslots=" << nslots << endl;/*}}}*/
+    cout << "nslots=" << nslots << endl;
+    CtxtByte const_c = encrypt_byte(ea, publicKey, 0x63);
+    global_c = &const_c;
+    /*}}}*/
 
     // test SubByte
     puts("");
     u8 inp = 0xAB;
-    CtxtByte test (encrypt_byte(ea, publicKey, inp));
+    CtxtByte test = encrypt_byte(ea, publicKey, inp);
     sub_byte(test);
     u8 res = decrypt_byte(ea, secretKey, test);
     printf("homomorphic SubByte(0x%02x) = 0x%02x\n", inp, res);
