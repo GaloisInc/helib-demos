@@ -12,8 +12,6 @@
 #include <iostream>
 #include <vector>
 #include <time.h>
-#include "FHE.h"
-#include "EncryptedArray.h"
 #include "simon-plaintext.h"
 
 using namespace std;

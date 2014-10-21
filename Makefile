@@ -5,14 +5,14 @@
 
 HELIB=HElib
 NTL=ntl-6.2.1
-CC=g++
+CC=clang++
 CFLAGS=-std=c++11 -Ideps/$(HELIB)/src -Ideps/$(NTL)/include -g --static -Wall -O3
 LFLAGS=
 
 DEPS = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
 
-HEADS = simon-plaintext.h simon-util.h
-OBJ = simon-util.o simon-plaintext.o
+HEADS = helib-instance.h helib-stub.h simon-plaintext.h simon-util.h
+OBJ   = helib-instance.o helib-stub.o simon-plaintext.o simon-util.o 
 
 all: aes multest simon-simd simon-blocks simon-plaintext
 
@@ -20,13 +20,13 @@ aes: aes.cpp $(OBJ)
 	$(CC) $(CFLAGS) aes.cpp $(DEPS) -o aes $(LFLAGS) $(OBJ)
 
 simon-plaintext: simon-plaintext-test.cpp $(OBJ)
-	$(CC) $(CFLAGS) simon-plaintext-test.cpp $(DEPS) -o simon-plaintext $(LFLAGS) $(OBJ)
+	$(CC) $(CFLAGS) simon-plaintext-test.cpp $(OBJ) $(DEPS) -o simon-plaintext $(LFLAGS)
 
 simon-blocks: simon-blocks.cpp $(OBJ)
-	$(CC) $(CFLAGS) simon-blocks.cpp $(DEPS) -o simon-blocks $(LFLAGS) $(OBJ)
+	$(CC) $(CFLAGS) simon-blocks.cpp $(OBJ) $(DEPS) -o simon-blocks $(LFLAGS)
 
 simon-simd: simon-simd.cpp $(OBJ)
-	$(CC) $(CFLAGS) simon-simd.cpp $(DEPS) -o simon-simd $(LFLAGS) $(OBJ)
+	$(CC) $(CFLAGS) simon-simd.cpp $(OBJ) $(DEPS) -o simon-simd $(LFLAGS)
 
 %.o: %.cpp $(HEADS)
 	$(CC) $(CFLAGS) -c $<

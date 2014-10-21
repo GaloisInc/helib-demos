@@ -6,12 +6,13 @@
 // An implementation of the SIMON block cipher in HElib. Each Ctxt gets packed
 // with 32 bits, representing half of a SIMON block.
 
+#include "helib-stub.h"
 #include "simon-plaintext.h"
 #include "simon-util.h"
 
 EncryptedArray* global_ea;
 Ctxt* global_maxint;
-size_t* global_nslots;
+size_t global_nslots;
 
 struct heblock {
     Ctxt x;
@@ -52,7 +53,7 @@ void encRound(Ctxt &key, heblock& inp) {
 
 Ctxt heEncrypt(const FHEPubKey& k, uint32_t x) {
     vector<long> vec = uint32ToBits(x);
-    pad(0, vec, *global_nslots);
+    pad(0, vec, global_nslots);
     Ctxt c(k);
     global_ea->encrypt(c, k, vec);
     return c;
@@ -69,7 +70,7 @@ vector<heblock> heEncrypt (const FHEPubKey& k, string s) {
     vector<Ctxt> cts;
     vector<heblock> blocks;
     for (size_t i = 0; i < pt.size(); i++) {
-        pad(0, pt[i], *global_nslots);
+        pad(0, pt[i], global_nslots);
         Ctxt c(k);
         global_ea->encrypt(c, k, pt[i]);
         cts.push_back(c);
@@ -81,10 +82,10 @@ vector<heblock> heEncrypt (const FHEPubKey& k, string s) {
 }
 
 vector<Ctxt> heEncrypt (const FHEPubKey& pubkey, vector<uint32_t> k) {
-    vector<vector<long>> kbits = keyToVectors(k, *global_nslots);
+    vector<vector<long>> kbits = keyToVectors(k, global_nslots);
     vector<Ctxt> encryptedKey;
     for (size_t i = 0; i < kbits.size(); i++) {
-        pad(0, kbits[i], *global_nslots);
+        pad(0, kbits[i], global_nslots);
         Ctxt kct(pubkey);
         global_ea->encrypt(kct, pubkey, kbits[i]);
         encryptedKey.push_back(kct);
@@ -116,33 +117,13 @@ int main(int argc, char **argv)
     pt_expandKey(k);
     printKey(k);
     
-    long m=0, p=2, r=1;
-    //long L=16;
-    long L=70;
-    long c=3;
-    long w=64;
-    long d=0;
-    long security = 128;
-    cout << "L=" << L << endl;
-    ZZX G;
-    cout << "Finding m..." << endl;
-    m = FindM(security,L,c,p,d,0,0);
-    cout << "Generating context..." << endl;
-    FHEcontext context(m, p, r);
-    cout << "Building mod-chain..." << endl;
-    buildModChain(context, L, c);
-    cout << "Generating keys..." << endl;
-    FHESecKey seckey(context);
-    const FHEPubKey& pubkey = seckey;
-    G = context.alMod.getFactorsOverZZ()[0];
-    seckey.GenSecKey(w);
-    addSome1DMatrices(seckey);
-    EncryptedArray ea(context, G);
-    size_t nslots = ea.size();
-    cout << "nslots = " << nslots << endl;
+    HElibInstance inst(70);
+    EncryptedArray ea = inst.get_ea();
+    FHEPubKey pubkey = inst.get_pubkey();
+    FHESecKey seckey = inst.get_seckey();
 
     // set up globals
-    global_nslots = &nslots;
+    global_nslots = inst.get_nslots();
     global_ea     = &ea;
     Ctxt maxint   = heEncrypt(pubkey, 0xFFFFFFFF);
     global_maxint = &maxint;

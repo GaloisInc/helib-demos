@@ -5,6 +5,7 @@
 //
 // A test that the plaintext implementation of SIMON is correct.
 
+#include <math.h>
 #include "simon-plaintext.h"
 #include "simon-util.h"
 

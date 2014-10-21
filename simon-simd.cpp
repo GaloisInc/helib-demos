@@ -9,6 +9,7 @@
 // into the same Ctxt.
 
 #include <algorithm>
+#include "helib-instance.h"
 #include "simon-plaintext.h"
 #include "simon-util.h"
 
@@ -174,33 +175,13 @@ int main(int argc, char **argv)
     pt_expandKey(k);
     printKey(k);
 
-    // initialize helib
-    long m=0, p=2, r=1;
-    long L=23;
-    long c=3;
-    long w=64;
-    long d=0;
-    long security = 128;
-    cout << "L=" << L << endl;
-    ZZX G;
-    cout << "Finding m..." << endl;
-    m = FindM(security,L,c,p,d,0,0);
-    cout << "Generating context..." << endl;
-    FHEcontext context(m, p, r);
-    cout << "Building mod-chain..." << endl;
-    buildModChain(context, L, c);
-    cout << "Generating keys..." << endl;
-    FHESecKey seckey(context);
-    const FHEPubKey& pubkey = seckey;
-    G = context.alMod.getFactorsOverZZ()[0];
-    seckey.GenSecKey(w);
-    addSome1DMatrices(seckey);
-    EncryptedArray ea(context, G);
-    long nslots = ea.size();
-    cout << "nslots = " << nslots << endl;
+    HElibInstance inst(23);
+    EncryptedArray ea = inst.get_ea();
+    FHEPubKey pubkey = inst.get_pubkey();
+    FHESecKey seckey = inst.get_seckey();
 
     // set up globals
-    global_nslots = nslots;
+    global_nslots = inst.get_nslots();
     ctvec maxint (ea, pubkey, transpose(uint32ToBits(0xFFFFFFFF)));
     global_maxint = &maxint;
 
