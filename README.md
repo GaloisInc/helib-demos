@@ -13,12 +13,7 @@ Installation
 
 There are two dependencies - [HElib](https://github.com/shaih/HElib) and
 [NTL](https://github.com/shaih/HElib) (required by HElib). The makefile is set up to download and
-build them to the **deps** directory. First run
-
->    make deps
-
-This will download and install NTL and HElib to the **deps** directory. From here you can simply
-compile the demos with
+build them to the **deps** directory automatically.  Simply compile everything with
 
 >    make
 
@@ -35,6 +30,8 @@ Description of Demos
 
 * simon-plaintext-test.cpp - plaintext version of the SIMON block cipher for benchmarking.
 
+* aes.cpp - homomorphic implementation of AES128
+
 Supporting Files
 ----------------
 
@@ -42,7 +39,13 @@ Supporting Files
 
 * simon-util.{h,cpp} - data transformation functions
 
-* simon.cry - Cryptol implemenation of SIMON 64/128
+* helib-instance.{h,cpp} - encapsulation of HElib's extensive boilerplate
+
+* helib-stub.{b,cpp} - fake HElib functions for plaintext evaluation and verification
+
+* aes.cry - Cryptol implementation of AES128
+
+* simon.cry - Cryptol implemenation of SIMON64/128
 
 * rotations.cry - Cryptol verification that the rotateLeft implementation is correct
 
