@@ -112,7 +112,7 @@ a bit tricky tricky. We can derive OR by using DeMorgan's law on AND.
 
 >    [simon-blocks.cpp]
 >
->    // this algorithm is verified in Cryptol in rotation.cry
+>    // this algorithm is verified in Cryptol in simon.cry
 >    void rotateLeft32(Ctxt &x, int n) {
 >        Ctxt other = x;
 >        global_ea->shift(x, n);

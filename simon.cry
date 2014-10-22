@@ -67,3 +67,21 @@ property uniqueExpandSimon k1 k2 = (k1 == k2) || (expandKey k1 != expandKey k2)
 
 testKey = [0x1b1a1918, 0x13121110, 0x0b0a0908, 0x03020100]
 test = encrypt testKey (0x656b696c, 0x20646e75) == (0x44c8fc20, 0xb9dfa07a)
+
+// Verify rotations
+
+rotateLeft400 : ([400], [6]) -> [400]
+rotateLeft400 (x,n) = ((x << n) || (x >> (32-n))) && (zero # 0xFFFFFFFF)
+
+
+rl400True : [400] -> [6] -> Bit
+property rl400True z n = n >= 32 || (rotateLeft400 (z', n) == zero # (y <<< n))
+    where z' = z && (zero # 0xFFFFFFFF)
+          y  = drop `{400-32} z
+
+rotateLeft32 : ([32], [6]) -> [32]
+rotateLeft32 (x,n) = (x << n) || (x >> (32 - n))
+
+rl32True : [32] -> [6] -> Bit
+property rl32True z n = n >= 32 || ((rotateLeft32 (z, n)) == z <<< n)
+

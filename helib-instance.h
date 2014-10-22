@@ -12,20 +12,21 @@
 #include "FHE.h"
 #include "EncryptedArray.h"
 
-class HElibInstance {
-    EncryptedArray* _ea;
-    FHEPubKey* _pubkey;
-    FHESecKey* _seckey;
-public:
-    HElibInstance (long L=16, bool verbose=true);
-    const EncryptedArray& get_ea () { return *_ea; }
-    size_t get_nslots () { return _ea->size(); }
-    const FHEPubKey& get_pubkey () { return *_pubkey; }
-    const FHESecKey& get_seckey () { return *_seckey; }
-    ~HElibInstance () { delete _ea; delete _pubkey; delete _seckey; }
-private:
-    HElibInstance (const HElibInstance&);            // no copying allowed
-    HElibInstance& operator= (const HElibInstance&); //
-};
+//class HElibInstance {
+    //FHEcontext* _context;
+    //FHEPubKey* _pubkey;
+    //FHESecKey* _seckey;
+    //EncryptedArray* _ea;
+//public:
+    //HElibInstance (long L=16, bool verbose=true);
+    //EncryptedArray& get_ea () { return *_ea; }
+    //size_t get_nslots () { return _ea->size(); }
+    //FHEPubKey& get_pubkey () { return *_pubkey; }
+    //FHESecKey& get_seckey () { return *_seckey; }
+    //~HElibInstance () { delete _ea; delete _pubkey; delete _seckey; delete _context; }
+//private:
+    //HElibInstance (const HElibInstance&);            // no copying allowed
+    //HElibInstance& operator= (const HElibInstance&); //
+//};
 
 #endif

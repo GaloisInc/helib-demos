@@ -9,6 +9,7 @@
 #ifndef SIMONPT_H
 #define SIMONPT_H
 
+#include <cstdlib>
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -27,7 +28,7 @@ const size_t m = 4;
 const size_t j = 3;
 const size_t T = 44;             // SIMON specifications call for 44 rounds
 
-const vector<vector<uint32_t>> z (
+const vector< vector<uint32_t> > z (
     { { 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0,
         0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1,
         0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0 },

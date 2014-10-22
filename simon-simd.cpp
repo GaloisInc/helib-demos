@@ -181,15 +181,34 @@ int main(int argc, char **argv)
     vector<pt_key32> k ({0x1b1a1918, 0x13121110, 0x0b0a0908, 0x03020100});
     pt_expandKey(k);
     printKey(k);
-    return 0;
 
-    HElibInstance inst(23);
-    EncryptedArray ea = inst.get_ea();
-    FHEPubKey pubkey = inst.get_pubkey();
-    FHESecKey seckey = inst.get_seckey();
+    long m=0;
+    long p=2;
+    long r=1;
+    long c=3;
+    long w=64;
+    long d=0;
+    long security = 128;
+    long L=23;
+    cout << "L=" << L << endl;
+    ZZX G;
+    cout << "Finding m..." << endl;
+    m = FindM(security,L,c,p,d,0,0);
+    cout << "Generating context..." << endl;
+    FHEcontext context (m, p, r);
+    cout << "Building mod-chain..." << endl;
+    buildModChain(context, L, c);
+    cout << "Generating keys..." << endl;
+    FHESecKey seckey (context);
+    FHEPubKey pubkey (seckey);
+    G = context.alMod.getFactorsOverZZ()[0];
+    seckey.GenSecKey(w);
+    addSome1DMatrices(seckey);
+    EncryptedArray ea (context, G);
+    global_nslots = ea.size();
+    cout << "nslots = " << global_nslots << endl;
 
     // set up globals
-    global_nslots = inst.get_nslots();
     ctvec maxint (ea, pubkey, transpose(uint32ToBits(0xFFFFFFFF)));
     global_maxint = &maxint;
 

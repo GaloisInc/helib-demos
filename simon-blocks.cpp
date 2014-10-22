@@ -122,10 +122,12 @@ int main(int argc, char **argv)
     pt_expandKey(k);
     printKey(k);
     
-    HElibInstance inst(70);
+    //HElibInstance inst(70);
+    HElibInstance inst(3);
     EncryptedArray ea = inst.get_ea();
     FHEPubKey pubkey = inst.get_pubkey();
     FHESecKey seckey = inst.get_seckey();
+    cout << "hello" << endl;
 
     // set up globals
     global_nslots = inst.get_nslots();

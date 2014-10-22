@@ -6,26 +6,23 @@
 HELIB  = HElib
 NTL    = ntl-6.2.1
 CC     = clang++
-CFLAGS = -std=c++11 -g --static -Wall -O3 -ferror-limit=4
+CFLAGS = -std=c++11 -g --static -Wall -ferror-limit=4
 
 HEADS = simon-plaintext.h simon-util.h
 OBJ   = simon-plaintext.o simon-util.o 
 EXE   = multest simon-simd simon-blocks simon-plaintext
 
 ifeq ($(strip $(STUB)),)
-	OBJ += helib-instance.o
+	#OBJ += helib-instance.o
 	DEPS = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
 	CFLAGS += -Ideps/$(HELIB)/src -Ideps/$(NTL)/include
 else
 	OBJ += helib-stub.o
-	CFLAGS += -DSTUB=1
+	CFLAGS += -DSTUB
 	DEPS = ""
 endif
 
 all: $(EXE)
-
-#aes: aes.cpp $(OBJ) helib
-	#$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
 
 multest: multest.cpp $(OBJ) helib
 	$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
@@ -39,8 +36,11 @@ simon-blocks: simon-blocks.cpp $(OBJ) helib
 simon-plaintext: simon-plaintext-test.cpp $(OBJ)
 	$(CC) $(CFLAGS) $< simon-util.o simon-plaintext.o -o $@
 
-%.o: %.cpp %.h
+%.o: %.cpp
 	$(CC) $(CFLAGS) $< -c
+
+%.bc: %.cpp
+	clang++ -DSTUB -std=c++11 -emit-llvm -c $< -o $@
 
 helib: ntl
 	@mkdir -p deps
@@ -71,3 +71,4 @@ clean:
 	rm -f simon-blocks
 	rm -f simon-plaintext
 	rm -f *.o
+	rm -f *.bc
