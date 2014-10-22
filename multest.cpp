@@ -7,11 +7,14 @@
 // discover the noise limit in HElib.
 
 #include <ctime>
+
 #ifdef STUB
 #include "helib-stub.h"
 #else
-#include "helib-instance.h"
+#include "FHE.h"
+#include "EncryptedArray.h"
 #endif
+
 #include "simon-util.h"
 
 EncryptedArray* global_ea;
@@ -32,14 +35,32 @@ vector<long> heDecrypt (const FHESecKey& k, Ctxt c) {
 }
 
 int main(int argc, char **argv) {
-    HElibInstance inst(16);
-    EncryptedArray ea = inst.get_ea();
-    FHEPubKey pubkey = inst.get_pubkey();
-    FHESecKey seckey = inst.get_seckey();
+    // initialize helib
+    long m=0, p=2, r=1;
+    long L=23;
+    long c=3;
+    long w=16;
+    long d=0;
+    long security = 128;
+    cout << "L=" << L << endl;
+    ZZX G;
+    cout << "Finding m..." << endl;
+    m = FindM(security,L,c,p,d,0,0);
+    cout << "Generating context..." << endl;
+    FHEcontext context(m, p, r);
+    cout << "Building mod-chain..." << endl;
+    buildModChain(context, L, c);
+    cout << "Generating keys..." << endl;
+    FHESecKey seckey(context);
+    const FHEPubKey& pubkey = seckey;
+    G = context.alMod.getFactorsOverZZ()[0];
+    seckey.GenSecKey(w);
+    addSome1DMatrices(seckey);
+    EncryptedArray ea(context, G);
+    global_nslots = ea.size();
+    cout << "nslots = " << global_nslots << endl;
 
-    // set up globals
-    global_nslots = inst.get_nslots();
-    global_ea     = &ea;
+    global_ea = &ea;
 
     // how many multiplications can we do without noise?
     Ctxt one = heEncrypt(pubkey, 1);

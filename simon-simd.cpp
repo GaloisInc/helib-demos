@@ -13,7 +13,8 @@
 #ifdef STUB
 #include "helib-stub.h"
 #else
-#include "helib-instance.h"
+#include "FHE.h"
+#include "EncryptedArray.h"
 #endif
 
 #include "simon-plaintext.h"
@@ -177,34 +178,32 @@ int main(int argc, char **argv)
 {
     string inp = "secrets! very secrets!";
     cout << "inp = \"" << inp << "\"" << endl;
-    //vector<pt_key32> k = pt_genKey();
-    vector<pt_key32> k ({0x1b1a1918, 0x13121110, 0x0b0a0908, 0x03020100});
+    vector<pt_key32> k = pt_genKey();
     pt_expandKey(k);
     printKey(k);
 
-    long m=0;
-    long p=2;
-    long r=1;
+    // initialize helib
+    long m=0, p=2, r=1;
+    long L=23;
     long c=3;
     long w=64;
     long d=0;
     long security = 128;
-    long L=23;
     cout << "L=" << L << endl;
     ZZX G;
     cout << "Finding m..." << endl;
     m = FindM(security,L,c,p,d,0,0);
     cout << "Generating context..." << endl;
-    FHEcontext context (m, p, r);
+    FHEcontext context(m, p, r);
     cout << "Building mod-chain..." << endl;
     buildModChain(context, L, c);
     cout << "Generating keys..." << endl;
-    FHESecKey seckey (context);
-    FHEPubKey pubkey (seckey);
+    FHESecKey seckey(context);
+    const FHEPubKey& pubkey = seckey;
     G = context.alMod.getFactorsOverZZ()[0];
     seckey.GenSecKey(w);
     addSome1DMatrices(seckey);
-    EncryptedArray ea (context, G);
+    EncryptedArray ea(context, G);
     global_nslots = ea.size();
     cout << "nslots = " << global_nslots << endl;
 
