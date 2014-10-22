@@ -8,8 +8,8 @@
 
 #include "simon-plaintext.h"
 
-uint32_t pt_rotateLeft(uint32_t x, size_t n) {
-    return x << n | x >> (32 - n);
+uint32_t pt_rotateLeft (uint32_t x, size_t n) {
+    return (x << n) | (x >> (32 - n));
 }
 
 void pt_expandKey(vector<pt_key32> &k, size_t nrounds){

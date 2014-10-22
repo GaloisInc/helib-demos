@@ -1,15 +1,10 @@
-#include "FHE.h"
-#include <string.h>
-#include <stdio.h>
-#include <ctime>
-#include "EncryptedArray.h"
-#include <NTL/lzz_pXFactoring.h>
-#include <fstream>
-#include <sstream>
-#include <sys/time.h>
-#include <algorithm>
-
 #define DEBUG_MODE 1
+
+#ifdef STUB
+#include "helib-stub.h"
+#else
+#include "helib-instance.h"
+#endif
 
 const int nrounds = 10;
 

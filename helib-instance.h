@@ -6,13 +6,16 @@
 // HElibInstance attempts to hide some of the boilerplate and in doing so make it easier to create a
 // fake HElib environment.
 
-#ifndef HELIBINSTANCE
-#define HELIBINSTANCE
+#ifndef HELIBINSTANCE_H
+#define HELIBINSTANCE_H
 
 #include "FHE.h"
 #include "EncryptedArray.h"
 
 class HElibInstance {
+    EncryptedArray* _ea;
+    FHEPubKey* _pubkey;
+    FHESecKey* _seckey;
 public:
     HElibInstance (long L=16, bool verbose=true);
     const EncryptedArray& get_ea () { return *_ea; }
@@ -21,11 +24,8 @@ public:
     const FHESecKey& get_seckey () { return *_seckey; }
     ~HElibInstance () { delete _ea; delete _pubkey; delete _seckey; }
 private:
-    EncryptedArray* _ea;
-    FHEPubKey* _pubkey;
-    FHESecKey* _seckey;
-    HElibInstance(const HElibInstance&);            // no copying allowed
-    HElibInstance& operator=(const HElibInstance&); //
+    HElibInstance (const HElibInstance&);            // no copying allowed
+    HElibInstance& operator= (const HElibInstance&); //
 };
 
 #endif

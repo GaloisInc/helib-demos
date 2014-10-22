@@ -9,7 +9,13 @@
 // into the same Ctxt.
 
 #include <algorithm>
+
+#ifdef STUB
+#include "helib-stub.h"
+#else
 #include "helib-instance.h"
+#endif
+
 #include "simon-plaintext.h"
 #include "simon-util.h"
 
@@ -171,9 +177,11 @@ int main(int argc, char **argv)
 {
     string inp = "secrets! very secrets!";
     cout << "inp = \"" << inp << "\"" << endl;
-    vector<pt_key32> k = pt_genKey();
+    //vector<pt_key32> k = pt_genKey();
+    vector<pt_key32> k ({0x1b1a1918, 0x13121110, 0x0b0a0908, 0x03020100});
     pt_expandKey(k);
     printKey(k);
+    return 0;
 
     HElibInstance inst(23);
     EncryptedArray ea = inst.get_ea();

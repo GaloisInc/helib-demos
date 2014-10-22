@@ -6,17 +6,26 @@
 HELIB  = HElib
 NTL    = ntl-6.2.1
 CC     = clang++
-CFLAGS = -std=c++11 -Ideps/$(HELIB)/src -Ideps/$(NTL)/include -g --static -Wall -O3
-DEPS   = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
+CFLAGS = -std=c++11 -g --static -Wall -O3 -ferror-limit=4
 
-HEADS = helib-instance.h helib-stub.h simon-plaintext.h simon-util.h
-OBJ   = helib-instance.o helib-stub.o simon-plaintext.o simon-util.o 
-EXE   = aes multest simon-simd simon-blocks simon-plaintext
+HEADS = simon-plaintext.h simon-util.h
+OBJ   = simon-plaintext.o simon-util.o 
+EXE   = multest simon-simd simon-blocks simon-plaintext
+
+ifeq ($(strip $(STUB)),)
+	OBJ += helib-instance.o
+	DEPS = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
+	CFLAGS += -Ideps/$(HELIB)/src -Ideps/$(NTL)/include
+else
+	OBJ += helib-stub.o
+	CFLAGS += -DSTUB=1
+	DEPS = ""
+endif
 
 all: $(EXE)
 
-aes: aes.cpp $(OBJ) helib
-	$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
+#aes: aes.cpp $(OBJ) helib
+	#$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
 
 multest: multest.cpp $(OBJ) helib
 	$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
@@ -27,11 +36,11 @@ simon-simd: simon-simd.cpp $(OBJ) helib
 simon-blocks: simon-blocks.cpp $(OBJ) helib
 	$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
 
-simon-plaintext: simon-plaintext.cpp $(OBJ)
-	$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
+simon-plaintext: simon-plaintext-test.cpp $(OBJ)
+	$(CC) $(CFLAGS) $< simon-util.o simon-plaintext.o -o $@
 
-.cpp.o: $(HEADS)
-	$(CC) $(CFLAGS) -c $<
+%.o: %.cpp %.h
+	$(CC) $(CFLAGS) $< -c
 
 helib: ntl
 	@mkdir -p deps
@@ -56,9 +65,9 @@ ntl:
 	@cd deps/$(NTL)/src; make
 
 clean:
-	rm aes
-	rm multest
-	rm simon-simd
-	rm simon-blocks
-	rm simon-plaintext
-	rm *.o
+	rm -f aes
+	rm -f multest
+	rm -f simon-simd
+	rm -f simon-blocks
+	rm -f simon-plaintext
+	rm -f *.o

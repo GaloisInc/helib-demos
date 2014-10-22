@@ -17,28 +17,21 @@ HElibInstance::HElibInstance (long L, bool verbose)
     long w=64;
     long d=0;
     long security = 128;
-    cout << "L=" << L << endl;
+    if (verbose) cout << "L=" << L << endl;
     ZZX G;
-
     if (verbose) cout << "Finding m..." << endl;
     m = FindM(security,L,c,p,d,0,0);
-
     if (verbose) cout << "Generating context..." << endl;
     FHEcontext context(m, p, r);
-
     if (verbose) cout << "Building mod-chain..." << endl;
     buildModChain(context, L, c);
-
     if (verbose) cout << "Generating keys..." << endl;
     _seckey = new FHESecKey(context);
     _pubkey = new FHEPubKey(*_seckey);
-
     G = context.alMod.getFactorsOverZZ()[0];
     _seckey->GenSecKey(w);
     addSome1DMatrices(*_seckey);
-
     _ea = new EncryptedArray(context, G);
-
     size_t nslots = _ea->size();
     if (verbose) cout << "nslots = " << nslots << endl;
 }

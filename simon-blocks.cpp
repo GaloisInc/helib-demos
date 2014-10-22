@@ -6,7 +6,12 @@
 // An implementation of the SIMON block cipher in HElib. Each Ctxt gets packed
 // with 32 bits, representing half of a SIMON block.
 
+#ifdef STUB
 #include "helib-stub.h"
+#else
+#include "helib-instance.h"
+#endif
+
 #include "simon-plaintext.h"
 #include "simon-util.h"
 
