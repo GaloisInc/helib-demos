@@ -14,8 +14,6 @@
 #include <time.h>
 #include "simon-pt.h"
 
-using namespace std;
-
 string blocksToStr (vector<pt_block> bs);
 
 vector<pt_block> strToBlocks (string inp);

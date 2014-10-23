@@ -8,8 +8,6 @@
 
 #include "simon-util.h"
 
-using namespace std;
-
 vector<pt_block> strToBlocks (string inp) {
     vector<pt_block> blocks;
     for (uint32_t i = 0; i < inp.size(); i += 8) {

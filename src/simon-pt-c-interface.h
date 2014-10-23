@@ -12,6 +12,7 @@
 
 extern "C" {
 
+uint32_t c_pt_rotateLeft (uint32_t x, uint32_t n);
 
 }
 
