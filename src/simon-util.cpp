@@ -130,11 +130,14 @@ void printKey (vector<pt_key32> k) {
 }
 
 void printVector (vector<long> inp) {
+    cout << "[ ";
     for (uint32_t i = 0; i < inp.size(); i++) {
         if (i > 0 && i%4==0) cout << " ";
+        if (i > 0 && i%64==0) cout << endl << "  ";
         cout << inp[i];
     }
     cout << endl;
+    cout << "]" << endl;
 }
 
 void printVector (vector<vector<long>> inp) {

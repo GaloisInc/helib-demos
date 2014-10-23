@@ -12,7 +12,7 @@
 #include <iostream>
 #include <vector>
 #include <time.h>
-#include "simon-plaintext.h"
+#include "simon-pt.h"
 
 using namespace std;
 

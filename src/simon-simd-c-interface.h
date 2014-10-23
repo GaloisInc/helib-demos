@@ -3,12 +3,16 @@
 //
 // Author: Brent Carmer
 //
-// HElibInstance simply imports HElib.
+// This file defines a C interface for simon functions
 
-#ifndef HELIBINSTANCE_H
-#define HELIBINSTANCE_H
+#ifndef SIMONSIMDC_H
+#define SIMONSIMDC_H
 
-#include "FHE.h"
-#include "EncryptedArray.h"
+#include "simon-simd.h"
+
+extern "C" {
+
+
+}
 
 #endif

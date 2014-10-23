@@ -6,6 +6,7 @@
 // This file creates a fake HElib environment for use with symbolic simulation.
 
 #include "helib-stub.h"
+#include "simon-util.h" // TODO remove me!
 
 Ctxt::Ctxt (const FHEPubKey& pubkey) : _vec() {};
 
@@ -48,13 +49,22 @@ void EncryptedArray::decrypt ( const Ctxt& ctxt, const FHESecKey& sKey, vector<l
     ptxt = ctxt._vec;
 }
 
-void EncryptedArray::shift (Ctxt c, long k)
+void EncryptedArray::shift (Ctxt& c, long k)
 {
-    vector<long> shifted (c._vec.begin() + k, c._vec.end());
-    vector<long> zeroes;
-    for (int i = 0; i < k; i++) zeroes.push_back(0);
-    zeroes.insert(zeroes.end(), c._vec.begin() + k, c._vec.end());
-    c._vec = zeroes;
+    if (k == 0) return;
+    else if (k > 0) {
+        vector<long> shifted (c._vec.begin(), c._vec.end()-k);
+        vector<long> zeroes;
+        for (int i = 0; i < k; i++) zeroes.push_back(0);
+        zeroes.insert(zeroes.end(), shifted.begin(), shifted.end());
+        c._vec = zeroes;
+    } else {
+        vector<long> shifted (c._vec.begin()-k, c._vec.end());
+        vector<long> zeroes;
+        for (int i = 0; i < (-k); i++) zeroes.push_back(0);
+        shifted.insert(shifted.end(), zeroes.begin(), zeroes.end());
+        c._vec = shifted;
+    }
 }
 
 long FindM (long k, long L, long c, long p, long d, long s, long chosen_m, bool verbose)

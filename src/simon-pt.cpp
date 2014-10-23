@@ -6,7 +6,7 @@
 // This file includes functions implementing the SIMON block cipher in
 // plaintext (without using homomorphic encryption).
 
-#include "simon-plaintext.h"
+#include "simon-pt.h"
 
 uint32_t pt_rotateLeft (uint32_t x, uint32_t n) {
     return (x << n) | (x >> (32 - n));

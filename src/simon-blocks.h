@@ -13,7 +13,7 @@
 #include "EncryptedArray.h"
 #endif
 
-#include "simon-plaintext.h"
+#include "simon-pt.h"
 #include "simon-util.h"
 
 extern EncryptedArray* global_ea;

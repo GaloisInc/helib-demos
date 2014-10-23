@@ -17,7 +17,7 @@
 #include "EncryptedArray.h"
 #endif
 
-#include "simon-plaintext.h"
+#include "simon-pt.h"
 #include "simon-util.h"
 
 class CTvec {
@@ -39,7 +39,7 @@ public:
     vector<vector<long>> decrypt (const FHESecKey& seckey);
 };
 
-extern long global_nslots;
+extern size_t global_nslots;
 extern CTvec* global_maxint;
 
 struct pt_preblock {

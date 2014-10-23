@@ -70,11 +70,11 @@ test = encrypt testKey (0x656b696c, 0x20646e75) == (0x44c8fc20, 0xb9dfa07a)
 
 // Verify rotations
 
-rotateLeft400 : ([400], [6]) -> [400]
+rotateLeft400 : ([400], [32]) -> [400]
 rotateLeft400 (x,n) = ((x << n) || (x >> (32-n))) && (zero # 0xFFFFFFFF)
 
 
-rl400True : [400] -> [6] -> Bit
+rl400True : [400] -> [32] -> Bit
 property rl400True z n = n >= 32 || (rotateLeft400 (z', n) == zero # (y <<< n))
     where z' = z && (zero # 0xFFFFFFFF)
           y  = drop `{400-32} z

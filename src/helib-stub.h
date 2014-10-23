@@ -30,6 +30,7 @@ public:
 
 class FHESecKey {
 public:
+    FHESecKey () {}
     FHESecKey (const FHEcontext& context) {}
     void GenSecKey (long w) {}
 };
@@ -53,7 +54,7 @@ class EncryptedArray {
 public:
     EncryptedArray (const FHEcontext& context, const ZZX& G) : _size(500) {}
     size_t size () { return _size; }
-    void shift (Ctxt c, long k); 
+    void shift (Ctxt& c, long k); 
     void encrypt (Ctxt& ctxt, const FHEPubKey& pKey, const vector<long>& ptxt);
     void decrypt (const Ctxt& ctxt, const FHESecKey& sKey, vector<long>& ptxt);
 };

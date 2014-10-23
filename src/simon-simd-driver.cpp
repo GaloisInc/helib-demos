@@ -10,7 +10,7 @@
 
 #include "simon-simd.h"
 
-long global_nslots;
+size_t global_nslots;
 CTvec* global_maxint;
 
 int main(int argc, char **argv)

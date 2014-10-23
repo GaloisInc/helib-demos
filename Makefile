@@ -10,12 +10,17 @@ CFLAGS = -std=c++11 -g --static -Wall -ferror-limit=2
 SRCDIR = src
 BLDDIR = build
 
-OBJ   = $(BLDDIR)/simon-plaintext.o $(BLDDIR)/simon-util.o 
-EXE   = multest simon-simd simon-blocks simon-plaintext
+OBJ    = $(BLDDIR)/simon-pt.o $(BLDDIR)/simon-util.o 
+BC     = $(BLDDIR)/simon-pt.bc $(BLDDIR)/simon-util.bc
+BLOCKSBC = $(BLDDIR)/simon-blocks.bc $(BLDDIR)/simon-blocks-c-interface.bc \
+		   $(BLDDIR)/helib-stub.bc $(BC)
+SIMDBC   = $(BLDDIR)/simon-simd.bc $(BLDDIR)/simon-simd-c-interface.bc \
+		   $(BLDDIR)/helib-stub.bc $(BC)
+EXE    = multest simon-simd simon-blocks simon-pt
 
 ifeq ($(strip $(STUB)),)
 	DEPS    = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
-	CFLAGS += -Ideps/$(HELIB)/src -Ideps/$(NTL)/include
+	LFLAGS  = -Ideps/$(HELIB)/src -Ideps/$(NTL)/include
 else
 	OBJ    += $(BLDDIR)/helib-stub.o
 	CFLAGS += -DSTUB
@@ -23,24 +28,36 @@ endif
 
 all: $(EXE)
 
-multest: $(SRCDIR)/multest.cpp $(OBJ) helib
-	$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
-
 simon-simd: $(SRCDIR)/simon-simd-driver.cpp $(BLDDIR)/simon-simd.o $(OBJ) helib
-	$(CC) $(CFLAGS) $< $(BLDDIR)/$@.o $(OBJ) $(DEPS) -o $@
+	$(CC) $(CFLAGS) $(LFLAGS) $< $(BLDDIR)/$@.o $(OBJ) $(DEPS) -o $@
 
 simon-blocks: $(SRCDIR)/simon-blocks-driver.cpp $(BLDDIR)/simon-blocks.o $(OBJ) helib
-	$(CC) $(CFLAGS) $< $(BLDDIR)/$@.o $(OBJ) $(DEPS) -o $@
+	$(CC) $(CFLAGS) $(LFLAGS) $< $(BLDDIR)/$@.o $(OBJ) $(DEPS) -o $@
 
-simon-plaintext: $(SRCDIR)/simon-plaintext-driver.cpp $(OBJ)
-	$(CC) $(CFLAGS) $< $(BLDDIR)/simon-util.o $(BLDDIR)/$@.o -o $@
+simon-pt: $(SRCDIR)/simon-pt-driver.cpp $(OBJ)
+	$(CC) $(CFLAGS) $(LFLAGS) $< $(BLDDIR)/simon-util.o $(BLDDIR)/$@.o -o $@
+
+bitcode: pt-bitcode blocks-bitcode simd-bitcode
+
+pt-bitcode: $(BLDDIR)/simon-pt-c-interface.bc $(BC)
+	llvm-link -o simon-pt.bc $(BLDDIR)/simon-pt-c-interface.bc $(BC)
+
+blocks-bitcode: $(BLOCKSBC)
+	llvm-link -o simon-blocks.bc $(BLOCKSBC)
+
+simd-bitcode: $(SIMDBC)
+	llvm-link -o simon-simd.bc $(SIMDBC)
+
+multest: $(SRCDIR)/multest.cpp $(OBJ) helib
+	$(CC) $(CFLAGS) $(LFLAGS) $< $(OBJ) $(DEPS) -o $@
 
 $(BLDDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(BLDDIR)
-	$(CC) $(CFLAGS) $< -c -o $@
+	$(CC) $(CFLAGS) $(LFLAGS) $< -c -o $@
 
 $(BLDDIR)/%.bc: $(SRCDIR)/%.cpp
-	clang++ -DSTUB -std=c++11 -emit-llvm -c $< -o $@
+	@mkdir -p $(BLDDIR)
+	clang++ $(CFLAGS) -DSTUB -emit-llvm -c $< -o $@
 
 helib: ntl
 	@mkdir -p deps
@@ -69,6 +86,7 @@ clean:
 	rm -f multest
 	rm -f simon-simd
 	rm -f simon-blocks
-	rm -f simon-plaintext
+	rm -f simon-pt
 	rm -f $(BLDDIR)/*.o
+	rm -f *.bc
 	rm -f $(BLDDIR)/*.bc
