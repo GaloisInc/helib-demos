@@ -7,38 +7,39 @@ HELIB  = HElib
 NTL    = ntl-6.2.1
 CC     = clang++
 CFLAGS = -std=c++11 -g --static -Wall -ferror-limit=2
+SRCDIR = src
+BLDDIR = build
 
-HEADS = simon-plaintext.h simon-util.h
-OBJ   = simon-plaintext.o simon-util.o 
+OBJ   = $(BLDDIR)/simon-plaintext.o $(BLDDIR)/simon-util.o 
 EXE   = multest simon-simd simon-blocks simon-plaintext
 
 ifeq ($(strip $(STUB)),)
-	DEPS = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
+	DEPS    = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
 	CFLAGS += -Ideps/$(HELIB)/src -Ideps/$(NTL)/include
 else
-	OBJ += helib-stub.o
+	OBJ    += $(BLDDIR)/helib-stub.o
 	CFLAGS += -DSTUB
-	DEPS = ""
 endif
 
 all: $(EXE)
 
-multest: multest.cpp $(OBJ) helib
+multest: $(SRCDIR)/multest.cpp $(OBJ) helib
 	$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
 
-simon-simd: simon-simd.cpp $(OBJ) helib
-	$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
+simon-simd: $(SRCDIR)/simon-simd-driver.cpp $(BLDDIR)/simon-simd.o $(OBJ) helib
+	$(CC) $(CFLAGS) $< $(BLDDIR)/$@.o $(OBJ) $(DEPS) -o $@
 
-simon-blocks: simon-blocks.cpp $(OBJ) helib
-	$(CC) $(CFLAGS) $< $(OBJ) $(DEPS) -o $@
+simon-blocks: $(SRCDIR)/simon-blocks-driver.cpp $(BLDDIR)/simon-blocks.o $(OBJ) helib
+	$(CC) $(CFLAGS) $< $(BLDDIR)/$@.o $(OBJ) $(DEPS) -o $@
 
-simon-plaintext: simon-plaintext-test.cpp $(OBJ)
-	$(CC) $(CFLAGS) $< simon-util.o simon-plaintext.o -o $@
+simon-plaintext: $(SRCDIR)/simon-plaintext-driver.cpp $(OBJ)
+	$(CC) $(CFLAGS) $< $(BLDDIR)/simon-util.o $(BLDDIR)/$@.o -o $@
 
-%.o: %.cpp
-	$(CC) $(CFLAGS) $< -c
+$(BLDDIR)/%.o: $(SRCDIR)/%.cpp
+	@mkdir -p $(BLDDIR)
+	$(CC) $(CFLAGS) $< -c -o $@
 
-%.bc: %.cpp
+$(BLDDIR)/%.bc: $(SRCDIR)/%.cpp
 	clang++ -DSTUB -std=c++11 -emit-llvm -c $< -o $@
 
 helib: ntl
@@ -69,5 +70,5 @@ clean:
 	rm -f simon-simd
 	rm -f simon-blocks
 	rm -f simon-plaintext
-	rm -f *.o
-	rm -f *.bc
+	rm -f $(BLDDIR)/*.o
+	rm -f $(BLDDIR)/*.bc

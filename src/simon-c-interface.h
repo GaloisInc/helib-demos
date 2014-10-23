@@ -28,7 +28,7 @@ const size_t m = 4;
 const size_t j = 3;
 const size_t T = 44;             // SIMON specifications call for 44 rounds
 
-const vector< vector<uint32_t> > z (
+const uint32_t z[5][62] = 
     { { 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0,
         0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1,
         0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0 },
@@ -43,14 +43,13 @@ const vector< vector<uint32_t> > z (
         0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1 },
     { 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1,
         1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1,
-        0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1 } }
-    );
+        0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1 } } ;
 
 vector<pt_key32> pt_genKey();
 
 void pt_expandKey(vector<pt_key32> &k, size_t nrounds = T);
 
-uint32_t pt_rotateLeft(uint32_t x, size_t n);
+uint32_t pt_rotateLeft(uint32_t x, uint32_t n);
 
 pt_block pt_encRound(pt_key32 k, pt_block inp);
 

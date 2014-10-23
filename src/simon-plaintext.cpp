@@ -8,7 +8,7 @@
 
 #include "simon-plaintext.h"
 
-uint32_t pt_rotateLeft (uint32_t x, size_t n) {
+uint32_t pt_rotateLeft (uint32_t x, uint32_t n) {
     return (x << n) | (x >> (32 - n));
 }
 

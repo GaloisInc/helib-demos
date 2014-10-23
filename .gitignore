@@ -1,6 +1,5 @@
 deps/*
-*.o
-*.bc
+build/*
 aes
 simon-simd
 simon-blocks
