@@ -6,14 +6,13 @@
 HELIB  = HElib
 NTL    = ntl-6.2.1
 CC     = clang++
-CFLAGS = -std=c++11 -g --static -Wall -ferror-limit=4
+CFLAGS = -std=c++11 -g --static -Wall -ferror-limit=2
 
 HEADS = simon-plaintext.h simon-util.h
 OBJ   = simon-plaintext.o simon-util.o 
 EXE   = multest simon-simd simon-blocks simon-plaintext
 
 ifeq ($(strip $(STUB)),)
-	#OBJ += helib-instance.o
 	DEPS = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
 	CFLAGS += -Ideps/$(HELIB)/src -Ideps/$(NTL)/include
 else

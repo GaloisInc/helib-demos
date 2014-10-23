@@ -15,8 +15,26 @@
 
 using namespace std;
 
-struct FHEPubKey {};
-struct FHESecKey {};
+struct ZZX {};
+
+class PAlgebraMod {
+public:
+    vector<ZZX> getFactorsOverZZ () { return { ZZX() }; }
+};
+
+class FHEcontext {
+public:
+    PAlgebraMod alMod;
+    FHEcontext (long m, long p, long r) {}
+};
+
+class FHESecKey {
+public:
+    FHESecKey (const FHEcontext& context) {}
+    void GenSecKey (long w) {}
+};
+
+typedef FHESecKey FHEPubKey;
 
 class Ctxt {
 public:
@@ -33,27 +51,17 @@ private:
 class EncryptedArray {
     size_t _size;
 public:
-    EncryptedArray (long L);
+    EncryptedArray (const FHEcontext& context, const ZZX& G) : _size(500) {}
     size_t size () { return _size; }
     void shift (Ctxt c, long k); 
     void encrypt (Ctxt& ctxt, const FHEPubKey& pKey, const vector<long>& ptxt);
     void decrypt (const Ctxt& ctxt, const FHESecKey& sKey, vector<long>& ptxt);
 };
 
-class HElibInstance {
-    EncryptedArray* _ea;
-    FHEPubKey* _pubkey;
-    FHESecKey* _seckey;
-public:
-    HElibInstance (long L=16, bool verbose=true);
-    const EncryptedArray& get_ea () { return *_ea; }
-    size_t get_nslots () { return _ea->size(); }
-    const FHEPubKey& get_pubkey () { return *_pubkey; }
-    const FHESecKey& get_seckey () { return *_seckey; }
-    ~HElibInstance () { delete _ea; delete _pubkey; delete _seckey; }
-private:
-    HElibInstance (const HElibInstance&);            // no copying allowed
-    HElibInstance& operator= (const HElibInstance&); //
-};
+long FindM (long k, long L, long c, long p, long d, long s, long chosen_m, bool verbose=false);
+
+void buildModChain (FHEcontext &context, long nPrimes, long c=3);
+
+void addSome1DMatrices(FHESecKey& sKey, long bound = 100, long keyID = 0);
 
 #endif
