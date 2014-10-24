@@ -1,8 +1,8 @@
 import "simon.cry";
 
 main = do {
-    pt <- llvm_load_module "simon-plaintext.bc";
-    pt_rotateLeft <- llvm_extract pt "pt_rotateLeft" llvm_pure;
+    pt <- llvm_load_module "simon-pt.bc";
+    pt_rotateLeft <- llvm_extract pt "c_pt_rotateLeft" llvm_pure;
     let rot_thm = {{ \(x, n) -> pt_rotateLeft x n == rotateLeft32 (x, n) }};
     result <- prove abc rot_thm;
     print "done";
