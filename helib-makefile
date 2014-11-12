@@ -14,7 +14,7 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #
 CC = g++
-NTL=../../ntl-6.2.1/include
+NTL=../../ntl-7.0.0/include
 CFLAGS =-std=c++11 -g -O2 -Wfatal-errors -Wshadow -Wall -I/usr/local/include -I$(NTL)
 
 #  If you get compilation errors, you may need to add -std=c++11 or -std=c++0x

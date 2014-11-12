@@ -4,9 +4,9 @@
 # Author: Brent Carmer
 
 HELIB  = HElib
-NTL    = ntl-6.2.1
-CC     = clang++
-CFLAGS = -std=c++11 -g --static -Wall -ferror-limit=2
+NTL    = ntl-7.0.0
+CC     = g++
+CFLAGS = -std=c++11 -g --static -Wall
 SRCDIR = src
 BLDDIR = build
 
@@ -20,7 +20,7 @@ EXE    = multest simon-simd simon-blocks simon-pt
 
 ifeq ($(strip $(STUB)),)
 	DEPS    = deps/$(HELIB)/src/fhe.a deps/$(NTL)/src/ntl.a
-	LFLAGS  = -Ideps/$(HELIB)/src -Ideps/$(NTL)/include
+	CFLAGS += -Ideps/$(HELIB)/src -Ideps/$(NTL)/include
 else
 	OBJ    += $(BLDDIR)/helib-stub.o
 	CFLAGS += -DSTUB
@@ -76,8 +76,7 @@ ntl:
 		rm -f $(NTL).tgz && \
 		cd $(NTL)/src && \
 		./configure WIZARD=off && \
-		cd ../include/NTL && \
-		patch < ../../../../ntl.vector.h.patch \
+		cd ../include/NTL
 	)
 	@cd deps/$(NTL)/src; make
 
