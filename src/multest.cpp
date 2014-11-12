@@ -36,8 +36,9 @@ vector<long> heDecrypt (const FHESecKey& k, Ctxt c) {
 
 int main(int argc, char **argv) {
     // initialize helib
+    timer(true);
     long m=0, p=2, r=1;
-    long L=23;
+    long L=17;
     long c=3;
     long w=16;
     long d=0;
@@ -64,17 +65,20 @@ int main(int argc, char **argv) {
 
     // how many multiplications can we do without noise?
     Ctxt one = heEncrypt(pubkey, 1);
-    for (int i = 1; i <= 50; i++) {
+    Ctxt two = heEncrypt(pubkey, 2);
+    timer();
+    for (int i = 1; i <= 100; i++) {
         cout << "mul#" << i << "..." << flush;
         ///////////
-        one.multiplyBy(one);
+        one.multiplyBy(two);
         ///////////
-        vector<long> res = heDecrypt(seckey, one);
-        for (int j = 32; j >= 0; j--) {
-            if (j > 0 && j%4==0) cout << " ";
-            cout << res[j];
-        }
-        cout << endl;
+
+        //vector<long> res = heDecrypt(seckey, one);
+        //for (int j = 32; j >= 0; j--) {
+            //if (j > 0 && j%4==0) cout << " ";
+            //cout << res[j];
+        //}
+        //cout << endl;
     }
     return 0;
 }

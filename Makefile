@@ -76,7 +76,7 @@ ntl:
 		rm -f $(NTL).tgz && \
 		cd $(NTL)/src && \
 		./configure WIZARD=off && \
-		cd ../include/NTL
+		cd ../include/NTL \
 	)
 	@cd deps/$(NTL)/src; make
 
