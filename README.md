@@ -5,9 +5,6 @@ This is a demonstration and exploration of the use of the [HElib library for hom
 encryption](https://github.com/shaih/HElib). Currently it contains a homomorphic implementation of
 the SIMON block cipher (see the [NSA whitepaper](http://eprint.iacr.org/2013/404.pdf)).
 
-simon-block and simon-simd will be able to do the full 44 rounds called for by the specs when HElib
-implements bootstrapping. Until then, they are limited to 10 and 32 rounds respectively.
-
 Installation
 ------------
 
