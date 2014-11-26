@@ -1,5 +1,5 @@
 Block Ciphers, Homomorphically
----------------------------
+------------------------------
 by Brent Carmer, Tom DuBuisson, and David W. Archer, PhD
 
 Our team at Galois, Inc. is interested in making secure computation practical. A lot of our secure
@@ -31,8 +31,12 @@ indicated that they plan to make bootstrapping (and thus FHE) available in a few
 experience using HElib, we thought to implement a member of the SIMON block cipher family. SIMON is
 a new family of lightweight block ciphers released by the [NSA](http://eprint.iacr.org/2013/404.pdf)
 in 2013. We implemented SIMON with 64 bit block size and 128 bit key size. The SIMON specification
-calls for 44 processing "rounds" in SIMON 64/128, but we were able to implement the cipher using the
+calls for 44 processing "rounds" in SIMON 64/128, which we were able to implement the cipher using the
 current (somewhat homomorphic) version of HElib.
+
+The most expensive operation in homomorphic encryption is ciphertext multiplication. Most of our
+work on SIMON is related to reducing the number of multiplications. We have a cool optimization to
+this effect (discussed below), which allows us to achieve excellent performance.
 
 The SIMON algorithm is shown below encoded in [Cryptol](http://cryptol.net/), a domain-specific
 language for expressing cryptographic algorithms developed by Galois and widely used in some
@@ -40,6 +44,10 @@ government agencies. Cryptol is designed to express cryptographic algorithms at 
 abstraction very close to mathematical specification, to minimize the likelihood of error. The
 Cryptol tool suite allows for verification that implementations match a Cryptol description, and
 also allows for deriving certain implementations from Cryptol specifications. 
+
+Using Cryptol's support for SAT solvers, the SIMON implementation has had various properties proven
+about it including no weak keys, injectivity of key expansion, and the identity of decryption
+composed with encryption.
 
 >     [simon.cry](https://github.com/GaloisInc/helib-demos/blob/master/simon.cry)
 >
@@ -66,13 +74,13 @@ Note: find the whole specification in [simon.cry](https://github.com/GaloisInc/h
 
 This specification is what we set out to implement, using HElib as a platform. Ciphertexts in HElib
 are composed of vectors of elements of certain rings. For our implementation, we use Ring(2). Thus
-each element in the ciphertext vector represents a single binary digit. HElib also supports the
-notion of "packing" multiple plaintexts into a single ciphertext, and computing on these in
-parallel, in a SIMD-like paradigm. The number of plaintexts packable into a ciphertext, which we
-call nSlots, is impacted by a number of parameters, including the maximum allowable computation
-depth of the circuit, which we call L. As we vary L to allow for more computation and parallelism,
-we also affect the cost of the computation in the form of the size of cryptographic keys used at
-each level in the Boolean circuit.
+each element in the ciphertext vector represents a single bit. HElib also supports the notion of
+"packing" multiple plaintexts into a single ciphertext, and computing on these in parallel, in a
+SIMD-like paradigm. The number of plaintexts packable into a ciphertext, which we call nSlots, is
+impacted by a number of parameters, including the maximum allowable computation depth of the
+circuit, which we call L. As we vary L to allow for more computation and parallelism, we also affect
+the cost of the computation in the form of the size of cryptographic keys used at each level in the
+Boolean circuit.
 
 A first attempt
 ===============
