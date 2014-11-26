@@ -19,15 +19,15 @@ Note that you may need to tweak some of the build flags to get it to run on your
 Description of Demos
 --------------------
 
-* multest.cpp - test how many times HElib can homomorphically square 1.
+* multest - test how many times HElib can homomorphically square 1.
 
-* simon-blocks.cpp - homomorphic version of the SIMON block cipher.
+* simon-blocks - homomorphic version of the SIMON block cipher.
 
-* simon-simd.cpp - homomorphic version of the SIMON block cipher with SIMD optimization.
+* simon-simd - homomorphic version of the SIMON block cipher with SIMD optimization.
 
-* simon-plaintext-test.cpp - plaintext version of the SIMON block cipher for benchmarking.
+* simon-plaintext-test - plaintext version of the SIMON block cipher for benchmarking.
 
-* aes.cpp - homomorphic implementation of AES128
+* aes - homomorphic implementation of AES128
 
 Supporting Files
 ----------------
@@ -47,6 +47,12 @@ Supporting Files
 * ntl.vector.h.patch - removes an unnecessary line in NTL that causes many warnings
 
 * makefile-helib - modified HElib makefile to use the locally built NTL
+
+Helib-stub
+----------
+
+Call `make` with argument `STUB=1` in order to activate the HElib stub framework,
+which replaces HElib with a pretend, plaintext version. Useful for debugging.
 
 Licence
 -------
