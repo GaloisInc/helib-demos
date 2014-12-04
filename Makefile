@@ -4,9 +4,9 @@
 # Author: Brent Carmer
 
 HELIB  = HElib
-NTL    = ntl-7.0.0
+NTL    = ntl-7.0.1
 CC     = g++
-CFLAGS = -std=c++11 -g --static -Wall
+CFLAGS = -std=c++11 -g -Wall
 SRCDIR = src
 BLDDIR = build
 
@@ -63,7 +63,9 @@ helib: ntl
 	@mkdir -p deps
 	@[[ -d deps/$(HELIB) ]] || \
 	(	git clone https://github.com/shaih/HElib.git deps/$(HELIB) && \
-		cp helib-makefile deps/$(HELIB)/src/Makefile \
+		cd deps/$(HELIB) && \
+		git checkout baf0fc1e2a8cf7173a7711be5e2dd4d4d8b16f01 && \
+		cp ../../helib-makefile src/Makefile \
 	)
 	@cd deps/$(HELIB)/src; make
 
