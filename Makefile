@@ -6,7 +6,7 @@
 HELIB  = HElib
 NTL    = ntl-7.0.1
 CC     = g++
-CFLAGS = -std=c++11 -g -Wall
+CFLAGS = -std=c++11 -g -Wall -static
 SRCDIR = src
 BLDDIR = build
 

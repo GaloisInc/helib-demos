@@ -9,10 +9,17 @@
 #include "simon-blocks.h"
 
 void negate32(Ctxt &x) {
-    x += *global_maxint;
+    x.addConstant(*global_maxint);
 }
 
-void rotateLeft32(Ctxt &x, int n) {
+//rotateLeft400Shai : ([400], [6]) -> [400]
+//rotateLeft400Shai (c,r) = tmp1 ^ tmp2
+  //where
+    //mask = zero # 0xFFFFFFFF
+    //tmp1 = (c << r)      && mask
+    //tmp2 = (c >> (32-r)) && mask
+
+void rotateLeft32Old(Ctxt &x, int n) {
     Ctxt other = x;
     global_ea->shift(x, n);
     global_ea->shift(other, -(32-n));
@@ -20,6 +27,15 @@ void rotateLeft32(Ctxt &x, int n) {
     negate32(other);
     x.multiplyBy(other);
     negate32(x);
+}
+
+void rotateLeft32(Ctxt &x, int n) {
+    Ctxt other = x;
+    global_ea->shift(x, n);
+    global_ea->shift(other, -(32-n));
+    x.multByConstant(*global_maxint);
+    other.multByConstant(*global_maxint);
+    x += other;
 }
 
 void encRound(Ctxt &key, heblock& inp) {

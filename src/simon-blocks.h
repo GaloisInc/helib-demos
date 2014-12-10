@@ -17,7 +17,7 @@
 #include "simon-util.h"
 
 extern EncryptedArray* global_ea;
-extern Ctxt* global_maxint;
+extern ZZX* global_maxint;
 extern size_t global_nslots;
 
 struct heblock {

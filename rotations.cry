@@ -9,11 +9,10 @@
 rotateLeft400 : ([400], [6]) -> [400]
 rotateLeft400 (x,n) = ((x << n) || (x >> (32-n))) && (zero # 0xFFFFFFFF)
 
+rl400True : [32] -> [6] -> Bit
+property rl400True z n = n >= 32 || (rotateLeft400 (zero # z, n) == zero # (z <<< n))
 
-rl400True : [400] -> [6] -> Bit
-property rl400True z n = n >= 32 || (rotateLeft400 (z', n) == zero # (y <<< n))
-    where z' = z && (zero # 0xFFFFFFFF)
-          y  = drop `{400-32} z
+
 
 rotateLeft32 : ([32], [6]) -> [32]
 rotateLeft32 (x,n) = (x << n) || (x >> (32 - n))
@@ -21,6 +20,15 @@ rotateLeft32 (x,n) = (x << n) || (x >> (32 - n))
 rl32True : [32] -> [6] -> Bit
 property rl32True z n = n >= 32 || ((rotateLeft32 (z, n)) == z <<< n)
 
-x : [400]
-x = zero # 0x12345678
+
+
+rotateLeft400Shai : ([400], [6]) -> [400]
+rotateLeft400Shai (c,r) = tmp1 ^ tmp2
+  where
+    mask = zero # 0xFFFFFFFF
+    tmp1 = (c << r)      && mask
+    tmp2 = (c >> (32-r)) && mask
+
+rl400ShaiTrue : [32] -> [6] -> Bit
+property rl400ShaiTrue z n = n > 32 || rotateLeft400Shai (zero # z, n) == zero # (z <<< n)
 

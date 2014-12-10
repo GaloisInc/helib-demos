@@ -9,7 +9,7 @@
 #include "simon-blocks.h"
 
 EncryptedArray* global_ea;
-Ctxt* global_maxint;
+ZZX* global_maxint;
 size_t global_nslots;
 
 int main(int argc, char **argv)
@@ -25,7 +25,8 @@ int main(int argc, char **argv)
 
     // initialize helib
     long m=0, p=2, r=1;
-    long L=70;
+    //long L=70;
+    long L=30;
     long c=3;
     long w=64;
     long d=0;
@@ -50,7 +51,14 @@ int main(int argc, char **argv)
 
     // set up globals
     global_ea     = &ea;
-    Ctxt maxint   = heEncrypt(pubkey, 0xFFFFFFFF);
+
+
+    PlaintextArray mask_p(*global_ea);
+    vector<long> vec = uint32ToBits(0xFFFFFFFF);
+    pad(0, vec, global_nslots);
+    mask_p.encode(vec);
+    ZZX maxint;
+    global_ea->encode(maxint, mask_p);
     global_maxint = &maxint;
 
     cout << "Encrypting SIMON key..." << flush;
