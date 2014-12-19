@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     // initialize helib
     long m=0, p=2, r=1;
     //long L=70;
-    long L=30;
+    long L=45;
     long c=3;
     long w=64;
     long d=0;
