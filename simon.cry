@@ -24,13 +24,13 @@ encrypt : [4][32] -> ([32], [32]) -> ([32], [32])
 encrypt k0 b0 = bs ! 0
   where
     bs = [b0] # [ encRound k b | b <- bs | k <- ks ]
-    ks = expandKey k0
+    ks = expandKey (reverse k0)
 
 decrypt : [4][32] -> ([32], [32]) -> ([32], [32])
 decrypt k0 b0 = bs ! 0
   where
     bs = [b0] # [ decRound k b | b <- bs | k <- reverse ks ]
-    ks = expandKey k0
+    ks = expandKey (reverse k0)
 
 
 expandKey : [4][32] -> [44][32]
